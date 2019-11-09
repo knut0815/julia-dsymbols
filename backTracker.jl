@@ -11,7 +11,7 @@ function Base.iterate(
     end
 
     while length(stack) > 0
-        current = last(last(stack))
+        current::S = last(last(stack))
         value::Union{Nothing, R} = extract(bt, current)
 
         next::Vector{S} = children(bt, current)
@@ -34,3 +34,6 @@ function Base.iterate(
 
     return nothing
 end
+
+
+Base.eltype(::Type{BackTracker{R, S}}) where {R, S} = R
