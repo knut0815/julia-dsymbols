@@ -26,10 +26,10 @@ end
 
 
 root(g::DSetGenerator) =
-    DSet(zeros(1, g.dim + 1))
+    DSet(zeros(Int, 1, g.dim + 1))
 
 extract(g::DSetGenerator, ds::DSet) =
-    firstUndefined(ds) == nothing ? nothing : ds
+    firstUndefined(ds) == nothing ? ds : nothing
 
 
 function children(g::DSetGenerator, ds::DSet)
@@ -42,7 +42,7 @@ function children(g::DSetGenerator, ds::DSet)
         for E in D : min(size(ds) + 1, g.maxSize)
             if get(ds, i, E) == 0
                 if E > size(ds)
-                    out = DSet(vcat(ds.op, zeros(1, dim(ds) + 1)))
+                    out = DSet(vcat(ds.op, zeros(Int, 1, dim(ds) + 1)))
                 else
                     out = DSet(copy(ds.op))
                 end
@@ -58,7 +58,7 @@ function children(g::DSetGenerator, ds::DSet)
                 end
 
                 if isCanonical(out)
-                    result.push(out)
+                    push!(result, out)
                 end
             end
         end
@@ -71,7 +71,7 @@ end
 function firstUndefined(ds::DSet)
     for D in 1 : size(ds)
         for i in 0 : dim(ds)
-            if get(ds, i, D) != 0
+            if get(ds, i, D) == 0
                 return D, i
             end
         end
@@ -90,14 +90,14 @@ end
 
 
 function scan(ds::DSet, w::Vector{Int}, D::Int, limit::Int)
-    E, k = D, 0
+    E, k = D, 1
 
     while k < limit && get(ds, w[k], E) != 0
         E = get(ds, w[k], E)
         k += 1
     end
 
-    return E, k
+    return E, k - 1
 end
 
 
@@ -113,8 +113,8 @@ end
 
 
 function compareRenumberedFrom(ds, D0)
-    n2o = zeros(size(ds))
-    o2n = zeros(size(ds))
+    n2o = zeros(Int, size(ds))
+    o2n = zeros(Int, size(ds))
 
     n2o[1] = D0
     o2n[D0] = 1
@@ -129,7 +129,7 @@ function compareRenumberedFrom(ds, D0)
                 next += 1
             end
 
-            nval = o2n[E]
+            nval = E == 0 ? 0 : o2n[E]
             oval = get(ds, i, D)
             if oval != nval
                 return oval == 0 ? -1 : nval == 0 ? 1 : nval - oval
