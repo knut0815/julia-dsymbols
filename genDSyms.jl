@@ -200,6 +200,6 @@ function Base.show(io::IO, ds::DSet)
 end
 
 
-for ds in DSetGenerator(2, 4)
+for ds in DSetGenerator(2, parse(Int, ARGS[1]))
     println(ds)
 end
