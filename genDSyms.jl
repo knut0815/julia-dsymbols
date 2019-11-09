@@ -92,7 +92,7 @@ end
 function scan(ds::DSet, w::Vector{Int}, D::Int, limit::Int)
     E, k = D, 1
 
-    while k < limit && get(ds, w[k], E) != 0
+    while k <= limit && get(ds, w[k], E) != 0
         E = get(ds, w[k], E)
         k += 1
     end
