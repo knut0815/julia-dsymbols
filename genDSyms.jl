@@ -12,7 +12,18 @@ Base.length(orb::Orbit) = length(orb.elements)
 
 r(orb::Orbit) = orb.isChain ? length(orb) : div(length(orb) + 1, 2)
 
-minV(orb::Orbit) = r(orb) * Int(ceil(3 / r(orb)))
+minV(orb::Orbit) = Int(ceil(3 / r(orb)))
+
+
+function curvature(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
+    result = -size(ds)//2
+
+    for i in 1 : length(orbs)
+        result += (orbs[i].isChain ? 1 : 2) // vs[i]
+    end
+
+    return result
+end
 
 
 function orbits(ds::DSet, i::Int)
@@ -146,7 +157,7 @@ function Base.show(io::IO, ds::DSet)
             if first(orb.elements) > 1
                 print(io, " ")
             end
-            print(io, minV(orb))
+            print(io, r(orb) * minV(orb))
         end
     end
 
@@ -158,13 +169,19 @@ for ds in DSetGenerator(2, parse(Int, ARGS[1]))
     println(ds)
 
     orbs = vcat(orbits(ds, 0), orbits(ds, 1))
+    vs = map(minV, orbs)
+    println("# $(vs)")
+
+    curv = curvature(ds, orbs, vs)
+    println("# $(curv)")
+
     elmMaps = automorphisms(ds)
 
     orbMaps = Set{Vector{Int}}()
     for m in elmMaps
         push!(orbMaps, onOrbits(m, orbs, ds))
     end
-
     println("# $(orbMaps)")
+
     println()
 end
