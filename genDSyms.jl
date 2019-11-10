@@ -2,6 +2,50 @@ include("backTracker.jl")
 include("dsets.jl")
 
 
+struct Orbit
+    index::Int
+    elements::Vector{Int}
+    isChain::Bool
+end
+
+
+function orbits(ds::DSet, i::Int)
+    seen = falses(size(ds))
+    result::Vector{Orbit} = []
+
+    for D in 1 : size(ds)
+        if !seen[D]
+            orb = [D]
+            seen[D] = true
+            isChain::Bool = false
+
+            E = D
+            k = i
+
+            while true
+                Ek = get(ds, k, E)
+                isChain = isChain || Ek == E
+                E = Ek == 0 ? E : Ek
+                k = i + i + 1 - k
+
+                if !seen[E]
+                    seen[E] = true
+                    push!(orb, E)
+                end
+
+                if E == D && k == i
+                    break
+                end
+            end
+
+            push!(result, Orbit(i, orb, isChain))
+        end
+    end
+
+    return result
+end
+
+
 function Base.show(io::IO, ds::DSet)
     print(io, "<1.1:", size(ds))
     if dim(ds) != 2
@@ -29,31 +73,15 @@ function Base.show(io::IO, ds::DSet)
         if i > 0
             print(",")
         end
-        j = i + 1
-        seen = falses(size(ds))
 
-        for D in 1 : size(ds)
-            if !seen[D]
-                if D > 1
-                    print(io, " ")
-                end
-                E, k = D, 0
-                while true
-                    Ei = get(ds, i, E)
-                    E = Ei == 0 ? E : Ei
-                    seen[E] = true
-                    Ej = get(ds, j, E)
-                    E = Ej == 0 ? E : Ej
-                    seen[E] = true
-                    k += 1
-
-                    if E == D
-                        break
-                    end
-                end
-
-                print(io, k * Int(ceil(3 / k)))
+        for orb in orbits(ds, i)
+            if first(orb.elements) > 1
+                print(io, " ")
             end
+
+            s = length(orb.elements)
+            r = orb.isChain ? s : div(s, 2)
+            print(io, r * Int(ceil(3 / r)))
         end
     end
 
