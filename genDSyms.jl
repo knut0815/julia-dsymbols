@@ -8,6 +8,9 @@ struct Orbit
     isChain::Bool
 end
 
+r(orb::Orbit) =
+    orb.isChain ? length(orb.elements) : div(length(orb.elements) + 1, 2)
+
 
 function orbits(ds::DSet, i::Int)
     seen = falses(size(ds))
@@ -78,10 +81,7 @@ function Base.show(io::IO, ds::DSet)
             if first(orb.elements) > 1
                 print(io, " ")
             end
-
-            s = length(orb.elements)
-            r = orb.isChain ? s : div(s, 2)
-            print(io, r * Int(ceil(3 / r)))
+            print(io, r(orb) * Int(ceil(3 / r(orb))))
         end
     end
 
