@@ -15,6 +15,19 @@ r(orb::Orbit) = orb.isChain ? length(orb) : div(length(orb) + 1, 2)
 minV(orb::Orbit) = Int(ceil(3 / r(orb)))
 
 
+struct DSym
+    dset::DSet
+    vs::Vector{Int}
+end
+
+
+Base.size(ds::DSym) = size(ds.dset)
+
+dim(ds::DSym) = dim(ds.dset)
+
+get(ds::DSym, i::Int, D::Int) = get(ds.dset, i, D)
+
+
 function curvature(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
     result = -size(ds)//2
 
@@ -61,6 +74,10 @@ function orbits(ds::DSet, i::Int)
 
     return result
 end
+
+orbits(ds::DSet) = vcat(orbits(ds, 0), orbits(ds, 1))
+
+orbits(ds::DSym) = orbits(ds.dset)
 
 
 function morphism(ds::DSet, D0::Int)
@@ -125,7 +142,7 @@ function onOrbits(map::Vector{Int}, orbs::Vector{Orbit}, ds::DSet)
 end
 
 
-function Base.show(io::IO, ds::DSet)
+function Base.show(io::IO, ds::DSym)
     print(io, "<1.1:", size(ds))
     if dim(ds) != 2
         print(io, " ", dim(ds))
@@ -148,16 +165,20 @@ function Base.show(io::IO, ds::DSet)
     end
     print(io, ":")
 
+    orbs = orbits(ds)
+
     for i in 0 : dim(ds) - 1
         if i > 0
             print(",")
         end
 
-        for orb in orbits(ds, i)
-            if first(orb.elements) > 1
-                print(io, " ")
+        for k in 1 : length(orbs)
+            if orbs[k].index == i
+                if first(orbs[k].elements) > 1
+                    print(io, " ")
+                end
+                print(io, r(orbs[k]) * ds.vs[k])
             end
-            print(io, r(orb) * minV(orb))
         end
     end
 
@@ -166,22 +187,22 @@ end
 
 
 for ds in DSetGenerator(2, parse(Int, ARGS[1]))
-    println(ds)
-
-    orbs = vcat(orbits(ds, 0), orbits(ds, 1))
+    orbs = orbits(ds)
     vs = map(minV, orbs)
-    println("# $(vs)")
-
     curv = curvature(ds, orbs, vs)
-    println("# $(curv)")
 
-    elmMaps = automorphisms(ds)
+    if curv < 0
+        println(DSym(ds, vs))
+    else
+        print(DSym(ds, vs))
+        println(" #$(curv)")
 
-    orbMaps = Set{Vector{Int}}()
-    for m in elmMaps
-        push!(orbMaps, onOrbits(m, orbs, ds))
+        elmMaps = automorphisms(ds)
+
+        orbMaps = Set{Vector{Int}}()
+        for m in elmMaps
+            push!(orbMaps, onOrbits(m, orbs, ds))
+        end
+        println("# $(orbMaps)")
     end
-    println("# $(orbMaps)")
-
-    println()
 end
