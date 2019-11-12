@@ -18,6 +18,8 @@ minV(orb::Orbit) = Int(ceil(3 / r(orb)))
 struct DSym
     dset::DSet
     vs::Vector{Int}
+    count1::Int
+    count2::Int
 end
 
 
@@ -143,7 +145,7 @@ end
 
 
 function Base.show(io::IO, ds::DSym)
-    print(io, "<1.1:", size(ds))
+    print(io, "<$(ds.count1).$(ds.count2):$(size(ds))")
     if dim(ds) != 2
         print(io, " ", dim(ds))
     end
@@ -186,15 +188,15 @@ function Base.show(io::IO, ds::DSym)
 end
 
 
-for ds in DSetGenerator(2, parse(Int, ARGS[1]))
+for (count, ds) in enumerate(DSetGenerator(2, parse(Int, ARGS[1])))
     orbs = orbits(ds)
     vs = map(minV, orbs)
     curv = curvature(ds, orbs, vs)
 
     if curv < 0
-        println(DSym(ds, vs))
+        println(DSym(ds, vs, count, 1))
     else
-        print(DSym(ds, vs))
+        print(DSym(ds, vs, count, 1))
         println(" #$(curv)")
 
         elmMaps = automorphisms(ds)
