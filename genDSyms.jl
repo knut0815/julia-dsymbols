@@ -18,8 +18,6 @@ minV(orb::Orbit) = Int(ceil(3 / r(orb)))
 struct DSym
     dset::DSet
     vs::Vector{Int}
-    count1::Int
-    count2::Int
 end
 
 
@@ -28,6 +26,23 @@ Base.size(ds::DSym) = size(ds.dset)
 dim(ds::DSym) = dim(ds.dset)
 
 get(ds::DSym, i::Int, D::Int) = get(ds.dset, i, D)
+
+
+struct NumberedDSym
+    dsym::DSym
+    count1::Int
+    count2::Int
+end
+
+
+NumberedDSym(dset::DSet, vs::Vector{Int}, count1::Int, count2::Int) =
+    NumberedDSym(DSym(dset, vs), count1, count2)
+
+Base.size(ds::NumberedDSym) = size(ds.dsym)
+
+dim(ds::NumberedDSym) = dim(ds.dsym)
+
+get(ds::NumberedDSym, i::Int, D::Int) = get(ds.dsym, i, D)
 
 
 function curvature(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
@@ -80,6 +95,33 @@ end
 orbits(ds::DSet) = vcat(orbits(ds, 0), orbits(ds, 1))
 
 orbits(ds::DSym) = orbits(ds.dset)
+
+orbits(ds::NumberedDSym) = orbits(ds.dsym)
+
+
+struct DSymState
+    vs::Vector{Int}
+    curv::Rational{Int}
+    next::Int
+end
+
+
+struct DSymGenerator <: BackTracker{DSym, DSymState}
+    dset::DSet
+    orbs::Vector{Orbit}
+end
+
+
+function root(g::DSymGenerator)
+    vs = map(minV, orbs)
+    curv = curvature(ds, orbs, vs)
+    return DSymState(vs, curv, 1)
+end
+
+
+function extract(g::DSymGenerator, st::DSymState)
+    return st.next > length(g.orbs) ? DSym(g.dset, st.vs) : nothing
+end
 
 
 function morphism(ds::DSet, D0::Int)
@@ -144,7 +186,7 @@ function onOrbits(map::Vector{Int}, orbs::Vector{Orbit}, ds::DSet)
 end
 
 
-function Base.show(io::IO, ds::DSym)
+function Base.show(io::IO, ds::NumberedDSym)
     print(io, "<$(ds.count1).$(ds.count2):$(size(ds))")
     if dim(ds) != 2
         print(io, " ", dim(ds))
@@ -179,7 +221,7 @@ function Base.show(io::IO, ds::DSym)
                 if first(orbs[k].elements) > 1
                     print(io, " ")
                 end
-                print(io, r(orbs[k]) * ds.vs[k])
+                print(io, r(orbs[k]) * ds.dsym.vs[k])
             end
         end
     end
@@ -194,9 +236,9 @@ for (count, ds) in enumerate(DSetGenerator(2, parse(Int, ARGS[1])))
     curv = curvature(ds, orbs, vs)
 
     if curv < 0
-        println(DSym(ds, vs, count, 1))
+        println(NumberedDSym(ds, vs, count, 1))
     else
-        print(DSym(ds, vs, count, 1))
+        print(NumberedDSym(ds, vs, count, 1))
         println(" #$(curv)")
 
         elmMaps = automorphisms(ds)
