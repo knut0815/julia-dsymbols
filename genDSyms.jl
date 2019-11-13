@@ -113,14 +113,47 @@ end
 
 
 function root(g::DSymGenerator)
-    vs = map(minV, orbs)
-    curv = curvature(ds, orbs, vs)
+    vs = map(minV, g.orbs)
+    curv = curvature(g.dset, g.orbs, vs)
     return DSymState(vs, curv, 1)
 end
 
 
 function extract(g::DSymGenerator, st::DSymState)
-    return st.next > length(g.orbs) ? DSym(g.dset, st.vs) : nothing
+    if st.next > length(g.orbs) && isCanonical(g, st) && goodResult(g, st)
+        return DSym(g.dset, st.vs)
+    end
+
+    return nothing
+end
+
+
+function children(g::DSymGenerator, st::DSymState)
+    result = []
+
+    if st.next <= length(g.orbs)
+        if st.curv < 0
+            push!(result, DSymState(st.vs, st.curv, length(g.orbs) + 1))
+        else
+            orb = g.orbs[st.next]
+
+            for v in st.vs[st.next] : 7
+                vs = copy(st.vs)
+                vs[st.next] = v
+                curv = curvature(g.dset, g.orbs, vs)
+
+                if curv >= 0 || isMinimallyHyperbolic(g.dset, g.orbs, vs)
+                    push!(result, DSymState(vs, curv, next + 1))
+                end
+
+                if curv < 0
+                    break;
+                end
+            end
+        end
+    end
+
+    return result
 end
 
 
