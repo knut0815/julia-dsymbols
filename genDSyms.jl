@@ -56,6 +56,52 @@ function curvature(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
 end
 
 
+function partialOrientation(ds::DSet)
+    ori = zeros(int, size(ds))
+    ori[1] = 1
+
+    for D in 1 : size(ds)
+        for i in 0 : dim(ds)
+            Di = get(ds, i, D)
+            if Di != D
+                ori[Di] = -ori[D]
+            end
+        end
+    end
+
+    return ori
+end
+
+
+function isLoopless(ds::DSet)
+    for i in 0 : dim(ds)
+        for D in 1 : size(ds)
+            if get(ds, i, D) == D
+                return false
+            end
+        end
+    end
+
+    return true
+end
+
+
+function isWeaklyOriented(ds::DSet)
+    ori = partialOrientation(ds)
+
+    for i in 0 : dim(ds)
+        for D in 1 : size(ds)
+            Di = get(ds, i, D)
+            if Di != D && ori[Di] == ori[D]
+                return false
+            end
+        end
+    end
+
+    return true
+end
+
+
 function orbits(ds::DSet, i::Int)
     seen = falses(size(ds))
     result::Vector{Orbit} = []
@@ -109,6 +155,7 @@ end
 struct DSymGenerator <: BackTracker{DSym, DSymState}
     dset::DSet
     orbs::Vector{Orbit}
+    orbMaps::Set{Vector{Int}}
 end
 
 
@@ -120,7 +167,7 @@ end
 
 
 function extract(g::DSymGenerator, st::DSymState)
-    if st.next > length(g.orbs) && isCanonical(g, st) && goodResult(g, st)
+    if st.next > length(g.orbs) && goodResult(g, st) && isCanonical(g, st)
         return DSym(g.dset, st.vs)
     end
 
@@ -154,6 +201,48 @@ function children(g::DSymGenerator, st::DSymState)
     end
 
     return result
+end
+
+
+function goodResult(g::DSymGenerator, st::DSymState)
+    if st.curv <= 0
+        return true
+    else
+        cones::Vector{Int} = []
+        corners::Vector{Int} = []
+
+        for i in 1 : length(g.orbs)
+            if st.vs[i] > 1
+                if g.orbs[i].isChain
+                    push!(corners, st.vs[i])
+                else
+                    push!(cones, st.vs[i])
+                end
+            end
+        end
+    end
+
+    front = join(reverse(sort(cones)), "")
+    middle = isLoopless(g.dset) ? "" : "*"
+    back = join(reverse(sort(corners)), "")
+    cross = isWeaklyOriented(g.dset) ? "" : "x"
+    key = front * middle * back * cross
+
+    goodKeys = [
+        "", "*", "x",
+        "532", "432", "332",
+        "422", "322", "222",
+        "44", "33", "22",
+        "*532", "*432", "*332", "3*2",
+        "*422", "*322", "*222", "2*4", "2*3", "2*2",
+        "*44", "*33", "*22", "4*", "3*", "2*", "4x", "3x", "2x"
+    ]
+
+    return key in goodKeys
+end
+
+
+function isCanonical(g::DSymGenerator, st::DSymState)
 end
 
 
