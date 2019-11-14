@@ -275,7 +275,8 @@ function isMinimallyHyperbolic(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
     else
         for i in 1 : length(orbs)
             k = orbs[i].isChain ? 1 : 2
-            if curv - k // vs[i] + k // (vs[i] - 1) < 0
+            v = vs[i]
+            if v > minV(orbs[i]) && curv - k // v + k // (v - 1) < 0
                 return false
             end
         end
