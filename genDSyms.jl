@@ -243,6 +243,33 @@ end
 
 
 function isCanonical(g::DSymGenerator, st::DSymState)
+    vs = st.vs
+
+    for m in g.orbMaps
+        if map(i -> vs[m[i]], 1 : length(vs)) < vs
+            return false
+        end
+    end
+
+    return true
+end
+
+
+function isMinimallyHyperbolic(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
+    curv = curvature(ds, orbs, vs)
+
+    if curv >= 0
+        return false
+    else
+        for i in 1 : length(orbs)
+            k = orbs[i].isChain ? 1 : 2
+            if curv - k // vs[i] + k // (vs[i] - 1) < 0
+                return false
+            end
+        end
+    end
+
+    return true
 end
 
 
