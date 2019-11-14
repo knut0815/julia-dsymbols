@@ -57,7 +57,7 @@ end
 
 
 function partialOrientation(ds::DSet)
-    ori = zeros(int, size(ds))
+    ori = zeros(Int, size(ds))
     ori[1] = 1
 
     for D in 1 : size(ds)
@@ -190,7 +190,7 @@ function children(g::DSymGenerator, st::DSymState)
                 curv = curvature(g.dset, g.orbs, vs)
 
                 if curv >= 0 || isMinimallyHyperbolic(g.dset, g.orbs, vs)
-                    push!(result, DSymState(vs, curv, next + 1))
+                    push!(result, DSymState(vs, curv, st.next + 1))
                 end
 
                 if curv < 0
@@ -379,23 +379,22 @@ function Base.show(io::IO, ds::NumberedDSym)
 end
 
 
-for (count, ds) in enumerate(DSetGenerator(2, parse(Int, ARGS[1])))
-    orbs = orbits(ds)
+for (count1, dset) in enumerate(DSetGenerator(2, parse(Int, ARGS[1])))
+    orbs = orbits(dset)
     vs = map(minV, orbs)
-    curv = curvature(ds, orbs, vs)
+    curv = curvature(dset, orbs, vs)
 
     if curv < 0
-        println(NumberedDSym(ds, vs, count, 1))
+        println(NumberedDSym(dset, vs, count1, 1))
     else
-        print(NumberedDSym(ds, vs, count, 1))
-        println(" #$(curv)")
-
-        elmMaps = automorphisms(ds)
-
+        elmMaps = automorphisms(dset)
         orbMaps = Set{Vector{Int}}()
         for m in elmMaps
-            push!(orbMaps, onOrbits(m, orbs, ds))
+            push!(orbMaps, onOrbits(m, orbs, dset))
         end
-        println("# $(orbMaps)")
+
+        for (count2, ds) in enumerate(DSymGenerator(dset, orbs, orbMaps))
+            println(NumberedDSym(ds, count1, count2))
+        end
     end
 end
