@@ -102,7 +102,7 @@ function isWeaklyOriented(ds::DSet)
 end
 
 
-function orbits(ds::DSet, i::Int)
+function orbits(ds::DSet, i::Int, j::Int)
     seen = falses(size(ds))
     result::Vector{Orbit} = []
 
@@ -119,7 +119,7 @@ function orbits(ds::DSet, i::Int)
                 Ek = get(ds, k, E)
                 isChain = isChain || Ek == E
                 E = Ek == 0 ? E : Ek
-                k = i + i + 1 - k
+                k = i + j - k
 
                 if !seen[E]
                     seen[E] = true
@@ -138,7 +138,7 @@ function orbits(ds::DSet, i::Int)
     return result
 end
 
-orbits(ds::DSet) = vcat(orbits(ds, 0), orbits(ds, 1))
+orbits(ds::DSet) = vcat(orbits(ds, 0, 1), orbits(ds, 1, 2))
 
 orbits(ds::DSym) = orbits(ds.dset)
 
@@ -211,6 +211,18 @@ function goodResult(g::DSymGenerator, st::DSymState)
         cones::Vector{Int} = []
         corners::Vector{Int} = []
 
+        for orb in orbits(g.dset, 0, 2)
+            if orb.isChain
+                if length(orb.elements) == 1
+                    push!(corners, 2)
+                end
+            else
+                if length(orb.elements) == 2
+                    push!(cones, 2)
+                end
+            end
+        end
+
         for i in 1 : length(g.orbs)
             if st.vs[i] > 1
                 if g.orbs[i].isChain
@@ -246,7 +258,7 @@ function isCanonical(g::DSymGenerator, st::DSymState)
     vs = st.vs
 
     for m in g.orbMaps
-        if map(i -> vs[m[i]], 1 : length(vs)) < vs
+        if map(i -> vs[m[i]], 1 : length(vs)) > vs
             return false
         end
     end
