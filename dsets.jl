@@ -228,8 +228,11 @@ end
 
 
 function isCanonical(ds::DSet)
+    n2o = zeros(Int, size(ds))
+    o2n = zeros(Int, size(ds))
+
     for D in 1 : size(ds)
-        if compareRenumberedFrom(ds, D) < 0
+        if compareRenumberedFrom(ds, D, n2o, o2n) < 0
             return false
         end
     end
@@ -238,9 +241,13 @@ function isCanonical(ds::DSet)
 end
 
 
-function compareRenumberedFrom(ds::DSet, D0::Int)
-    n2o = zeros(Int, size(ds))
-    o2n = zeros(Int, size(ds))
+function compareRenumberedFrom(
+    ds::DSet, D0::Int, n2o::Vector{Int}, o2n::Vector{Int}
+)
+    for D in 1 : size(ds)
+        n2o[D] = 0
+        o2n[D] = 0
+    end
 
     n2o[1] = D0
     o2n[D0] = 1
