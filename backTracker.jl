@@ -3,12 +3,8 @@ abstract type BackTracker{R, S} end
 
 function Base.iterate(
     bt::BackTracker{R, S},
-    stack::Union{Nothing, Vector{Vector{S}}}=nothing
+    stack::Vector{Vector{S}}=[[root(bt)]]
 )::Union{Nothing, Tuple{R, Vector{Vector{S}}}} where {R, S}
-
-    if stack == nothing
-        stack::Vector{Vector{S}} = [[root(bt)]]
-    end
 
     while length(stack) > 0
         current::S = last(last(stack))
