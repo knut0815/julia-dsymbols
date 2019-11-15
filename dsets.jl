@@ -19,6 +19,132 @@ function set!(ds::DSet, i::Int, D::Int, E::Int)
 end
 
 
+function partialOrientation(ds::DSet)
+    ori = zeros(Int, size(ds))
+    ori[1] = 1
+
+    for D in 1 : size(ds)
+        for i in 0 : dim(ds)
+            Di = get(ds, i, D)
+            if Di != D
+                ori[Di] = -ori[D]
+            end
+        end
+    end
+
+    return ori
+end
+
+
+function isLoopless(ds::DSet)
+    for i in 0 : dim(ds)
+        for D in 1 : size(ds)
+            if get(ds, i, D) == D
+                return false
+            end
+        end
+    end
+
+    return true
+end
+
+
+function isWeaklyOriented(ds::DSet)
+    ori = partialOrientation(ds)
+
+    for i in 0 : dim(ds)
+        for D in 1 : size(ds)
+            Di = get(ds, i, D)
+            if Di != D && ori[Di] == ori[D]
+                return false
+            end
+        end
+    end
+
+    return true
+end
+
+
+function orbits(ds::DSet, i::Int, j::Int)
+    seen = falses(size(ds))
+    result::Vector{Orbit} = []
+
+    for D in 1 : size(ds)
+        if !seen[D]
+            orb = [D]
+            seen[D] = true
+            isChain::Bool = false
+
+            E = D
+            k = i
+
+            while true
+                Ek = get(ds, k, E)
+                isChain = isChain || Ek == E
+                E = Ek == 0 ? E : Ek
+                k = i + j - k
+
+                if !seen[E]
+                    seen[E] = true
+                    push!(orb, E)
+                end
+
+                if E == D && k == i
+                    break
+                end
+            end
+
+            push!(result, Orbit(i, orb, isChain))
+        end
+    end
+
+    return result
+end
+
+orbits(ds::DSet) = vcat(orbits(ds, 0, 1), orbits(ds, 1, 2))
+
+
+function morphism(ds::DSet, D0::Int)
+    m = zeros(Int, size(ds))
+    m[1] = D0
+    q = [(1, D0)]
+
+    while length(q) > 0
+        D, E = popfirst!(q)
+
+        for i in 0 : dim(ds)
+            Di = get(ds, i, D)
+            Ei = get(ds, i, E)
+
+            if Di > 0 || Ei > 0
+                if m[Di] == 0
+                    m[Di] = Ei
+                    push!(q, (Di, Ei))
+                elseif m[Di] != Ei
+                    return nothing
+                end
+            end
+        end
+    end
+
+    return m
+end
+
+
+function automorphisms(ds::DSet)
+    result::Vector{Vector{Int}} = []
+
+    for D in 1 : size(ds)
+        map = morphism(ds, D)
+        if map != nothing
+            push!(result, map)
+        end
+    end
+
+    return result
+end
+
+
 struct DSetGenerator <: BackTracker{DSet, DSet}
     dim::Int
     maxSize::Int
