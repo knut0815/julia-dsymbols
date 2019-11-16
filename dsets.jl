@@ -255,17 +255,28 @@ function compareRenumberedFrom(
 
     for D in 1 : size(ds)
         for i in 0 : dim(ds)
-            E = get(ds, i, n2o[D])
-            if E != 0 && o2n[E] == 0
-                o2n[E] = next
-                n2o[next] = E
-                next += 1
-            end
-
-            nval = E == 0 ? 0 : o2n[E]
             oval = get(ds, i, D)
-            if oval != nval
-                return oval == 0 ? -1 : nval == 0 ? 1 : nval - oval
+            E = get(ds, i, n2o[D])
+
+            if E == 0
+                if oval != 0
+                    return 1
+                end
+            else
+                if o2n[E] == 0
+                    o2n[E] = next
+                    n2o[next] = E
+                    next += 1
+                end
+
+                if oval == 0
+                    return -1
+                else
+                    d = o2n[E] - oval
+                    if d != 0
+                        return d
+                    end
+                end
             end
         end
     end
