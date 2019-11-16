@@ -3,8 +3,8 @@ include("dsets.jl")
 
 
 struct Orbit
-    index::Int
-    elements::Vector{Int}
+    index::Int64
+    elements::Vector{Int64}
     isChain::Bool
 end
 
@@ -12,12 +12,12 @@ Base.length(orb::Orbit) = length(orb.elements)
 
 r(orb::Orbit) = orb.isChain ? length(orb) : div(length(orb) + 1, 2)
 
-minV(orb::Orbit) = Int(ceil(3 / r(orb)))
+minV(orb::Orbit) = Int64(ceil(3 / r(orb)))
 
 
 struct DSym
     dset::DSet
-    vs::Vector{Int}
+    vs::Vector{Int64}
 end
 
 
@@ -25,27 +25,27 @@ Base.size(ds::DSym) = size(ds.dset)
 
 dim(ds::DSym) = dim(ds.dset)
 
-get(ds::DSym, i::Int, D::Int) = get(ds.dset, i, D)
+get(ds::DSym, i::Int64, D::Int64) = get(ds.dset, i, D)
 
 
 struct NumberedDSym
     dsym::DSym
-    count1::Int
-    count2::Int
+    count1::Int64
+    count2::Int64
 end
 
 
-NumberedDSym(dset::DSet, vs::Vector{Int}, count1::Int, count2::Int) =
+NumberedDSym(dset::DSet, vs::Vector{Int64}, count1::Int64, count2::Int64) =
     NumberedDSym(DSym(dset, vs), count1, count2)
 
 Base.size(ds::NumberedDSym) = size(ds.dsym)
 
 dim(ds::NumberedDSym) = dim(ds.dsym)
 
-get(ds::NumberedDSym, i::Int, D::Int) = get(ds.dsym, i, D)
+get(ds::NumberedDSym, i::Int64, D::Int64) = get(ds.dsym, i, D)
 
 
-function curvature(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
+function curvature(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int64})
     result = -size(ds)//2
 
     for i in 1 : length(orbs)
@@ -62,21 +62,21 @@ orbits(ds::NumberedDSym) = orbits(ds.dsym)
 
 
 struct DSymState
-    vs::Vector{Int}
-    curv::Rational{Int}
-    next::Int
+    vs::Vector{Int64}
+    curv::Rational{Int64}
+    next::Int64
 end
 
 
 struct DSymGenerator <: BackTracker{DSym, DSymState}
     dset::DSet
     orbs::Vector{Orbit}
-    orbMaps::Set{Vector{Int}}
+    orbMaps::Set{Vector{Int64}}
 
     function DSymGenerator(dset::DSet)
         orbs = orbits(dset)
 
-        orbMaps = Set{Vector{Int}}()
+        orbMaps = Set{Vector{Int64}}()
         for m in automorphisms(dset)
             push!(orbMaps, onOrbits(m, orbs, dset))
         end
@@ -135,8 +135,8 @@ function goodResult(g::DSymGenerator, st::DSymState)
     if st.curv <= 0
         return true
     else
-        cones::Vector{Int} = []
-        corners::Vector{Int} = []
+        cones::Vector{Int64} = []
+        corners::Vector{Int64} = []
 
         for orb in orbits(g.dset, 0, 2)
             if orb.isChain
@@ -194,7 +194,7 @@ function isCanonical(g::DSymGenerator, st::DSymState)
 end
 
 
-function isMinimallyHyperbolic(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
+function isMinimallyHyperbolic(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int64})
     curv = curvature(ds, orbs, vs)
 
     if curv >= 0
@@ -213,8 +213,8 @@ function isMinimallyHyperbolic(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int})
 end
 
 
-function onOrbits(map::Vector{Int}, orbs::Vector{Orbit}, ds::DSet)
-    inOrb = zeros(Int, dim(ds), size(ds))
+function onOrbits(map::Vector{Int64}, orbs::Vector{Orbit}, ds::DSet)
+    inOrb = zeros(Int64, dim(ds), size(ds))
 
     for i in 1 : length(orbs)
         for D in orbs[i].elements
@@ -222,7 +222,7 @@ function onOrbits(map::Vector{Int}, orbs::Vector{Orbit}, ds::DSet)
         end
     end
 
-    orbMap = zeros(Int, length(orbs))
+    orbMap = zeros(Int64, length(orbs))
 
     for D in 1 : size(ds)
         for i in 0 : dim(ds) - 1

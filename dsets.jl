@@ -2,7 +2,7 @@ include("backTracker.jl")
 
 
 struct DSet
-    op::Array{Int,2}
+    op::Array{Int64,2}
 end
 
 
@@ -10,17 +10,17 @@ Base.size(ds::DSet) = first(size(ds.op))
 
 dim(ds::DSet) = last(size(ds.op)) - 1
 
-get(ds::DSet, i::Int, D::Int) = 1 <= D <= size(ds) ? ds.op[D, i + 1] : 0
+get(ds::DSet, i::Int64, D::Int64) = 1 <= D <= size(ds) ? ds.op[D, i + 1] : 0
 
 
-function set!(ds::DSet, i::Int, D::Int, E::Int)
+function set!(ds::DSet, i::Int64, D::Int64, E::Int64)
     ds.op[D, i + 1] = E
     ds.op[E, i + 1] = D
 end
 
 
 function partialOrientation(ds::DSet)
-    ori = zeros(Int, size(ds))
+    ori = zeros(Int64, size(ds))
     ori[1] = 1
 
     for D in 1 : size(ds)
@@ -65,7 +65,7 @@ function isWeaklyOriented(ds::DSet)
 end
 
 
-function orbits(ds::DSet, i::Int, j::Int)
+function orbits(ds::DSet, i::Int64, j::Int64)
     seen = falses(size(ds))
     result::Vector{Orbit} = []
 
@@ -104,8 +104,8 @@ end
 orbits(ds::DSet) = vcat(orbits(ds, 0, 1), orbits(ds, 1, 2))
 
 
-function morphism(ds::DSet, D0::Int)
-    m = zeros(Int, size(ds))
+function morphism(ds::DSet, D0::Int64)
+    m = zeros(Int64, size(ds))
     m[1] = D0
     q = [(1, D0)]
 
@@ -132,7 +132,7 @@ end
 
 
 function automorphisms(ds::DSet)
-    result::Vector{Vector{Int}} = []
+    result::Vector{Vector{Int64}} = []
 
     for D in 1 : size(ds)
         map = morphism(ds, D)
@@ -146,13 +146,13 @@ end
 
 
 struct DSetGenerator <: BackTracker{DSet, DSet}
-    dim::Int
-    maxSize::Int
+    dim::Int64
+    maxSize::Int64
 end
 
 
 root(g::DSetGenerator) =
-    DSet(zeros(Int, 1, g.dim + 1))
+    DSet(zeros(Int64, 1, g.dim + 1))
 
 extract(g::DSetGenerator, ds::DSet) =
     firstUndefined(ds) == nothing ? ds : nothing
@@ -168,7 +168,7 @@ function children(g::DSetGenerator, ds::DSet)
         for E in D : min(size(ds) + 1, g.maxSize)
             if get(ds, i, E) == 0
                 if E > size(ds)
-                    out = DSet(vcat(ds.op, zeros(Int, 1, dim(ds) + 1)))
+                    out = DSet(vcat(ds.op, zeros(Int64, 1, dim(ds) + 1)))
                 else
                     out = DSet(copy(ds.op))
                 end
@@ -207,7 +207,7 @@ function firstUndefined(ds::DSet)
 end
 
 
-function scan02Orbit(ds::DSet, D::Int)
+function scan02Orbit(ds::DSet, D::Int64)
     head, i = scan(ds, [0, 2, 0, 2], D, 4)
     tail, j = scan(ds, [2, 0, 2, 0], D, 4 - i)
 
@@ -215,7 +215,7 @@ function scan02Orbit(ds::DSet, D::Int)
 end
 
 
-function scan(ds::DSet, w::Vector{Int}, D::Int, limit::Int)
+function scan(ds::DSet, w::Vector{Int64}, D::Int64, limit::Int64)
     E, k = D, 1
 
     while k <= limit && get(ds, w[k], E) != 0
@@ -228,8 +228,8 @@ end
 
 
 function isCanonical(ds::DSet)
-    n2o = zeros(Int, size(ds))
-    o2n = zeros(Int, size(ds))
+    n2o = zeros(Int64, size(ds))
+    o2n = zeros(Int64, size(ds))
 
     for D in 1 : size(ds)
         if compareRenumberedFrom(ds, D, n2o, o2n) < 0
@@ -242,10 +242,10 @@ end
 
 
 function compareRenumberedFrom(
-    ds::DSet, D0::Int, n2o::Vector{Int}, o2n::Vector{Int}
+    ds::DSet, D0::Int64, n2o::Vector{Int64}, o2n::Vector{Int64}
 )
-    fill!(n2o, zero(Int))
-    fill!(o2n, zero(Int))
+    fill!(n2o, zero(Int64))
+    fill!(o2n, zero(Int64))
 
     n2o[1] = D0
     o2n[D0] = 1
