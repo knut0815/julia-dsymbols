@@ -145,21 +145,28 @@ function automorphisms(ds::DSet)
 end
 
 
-struct DSetGenerator <: BackTracker{DSet, DSet}
+struct DSetState
+    dset::DSet
+    isRemapStart::BitVector
+end
+
+
+struct DSetGenerator <: BackTracker{DSet, DSetState}
     dim::Int64
     maxSize::Int64
 end
 
 
 root(g::DSetGenerator) =
-    DSet(zeros(Int64, 1, g.dim + 1))
+    DSetState(DSet(zeros(Int64, 1, g.dim + 1)), falses(g.maxSize))
 
-extract(g::DSetGenerator, ds::DSet) =
-    firstUndefined(ds) == nothing ? ds : nothing
+extract(g::DSetGenerator, st::DSetState) =
+    firstUndefined(st.dset) == nothing ? st.dset : nothing
 
 
-function children(g::DSetGenerator, ds::DSet)
+function children(g::DSetGenerator, st::DSetState)
     result = []
+    ds = st.dset
     undef = firstUndefined(ds)
 
     if undef != nothing
@@ -167,24 +174,27 @@ function children(g::DSetGenerator, ds::DSet)
 
         for E in D : min(size(ds) + 1, g.maxSize)
             if get(ds, i, E) == 0
+                isRemapStart = copy(st.isRemapStart)
+
                 if E > size(ds)
-                    out = DSet(vcat(ds.op, zeros(Int64, 1, dim(ds) + 1)))
+                    dset = DSet(vcat(ds.op, zeros(Int64, 1, dim(ds) + 1)))
+                    isRemapStart[E] = true
                 else
-                    out = DSet(copy(ds.op))
+                    dset = DSet(copy(ds.op))
                 end
 
-                set!(out, i, D, E)
+                set!(dset, i, D, E)
 
-                head, tail, gap, k = scan02Orbit(out, D)
+                head, tail, gap, k = scan02Orbit(dset, D)
 
                 if gap == 1
-                    set!(out, k, head, tail)
+                    set!(dset, k, head, tail)
                 elseif gap == 0 && head != tail
                     continue;
                 end
 
-                if isCanonical(out)
-                    push!(result, out)
+                if checkCanonicity!(dset, isRemapStart)
+                    push!(result, DSetState(dset, isRemapStart))
                 end
             end
         end
@@ -227,13 +237,18 @@ function scan(ds::DSet, w::Vector{Int64}, D::Int64, limit::Int64)
 end
 
 
-function isCanonical(ds::DSet)
+function checkCanonicity!(ds::DSet, isRemapStart::BitVector)
     n2o = zeros(Int64, size(ds))
     o2n = zeros(Int64, size(ds))
 
     for D in 1 : size(ds)
-        if compareRenumberedFrom(ds, D, n2o, o2n) < 0
-            return false
+        if isRemapStart[D]
+            d = compareRenumberedFrom(ds, D, n2o, o2n)
+            if d < 0
+                return false
+            elseif d > 0
+                isRemapStart[D] = false
+            end
         end
     end
 
