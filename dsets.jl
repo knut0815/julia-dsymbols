@@ -244,10 +244,8 @@ end
 function compareRenumberedFrom(
     ds::DSet, D0::Int, n2o::Vector{Int}, o2n::Vector{Int}
 )
-    for D in 1 : size(ds)
-        n2o[D] = 0
-        o2n[D] = 0
-    end
+    fill!(n2o, zero(Int))
+    fill!(o2n, zero(Int))
 
     n2o[1] = D0
     o2n[D0] = 1
