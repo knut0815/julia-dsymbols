@@ -2,19 +2,6 @@ include("backTracker.jl")
 include("dsets.jl")
 
 
-struct Orbit
-    index::Int64
-    elements::Vector{Int64}
-    isChain::Bool
-end
-
-Base.length(orb::Orbit) = length(orb.elements)
-
-r(orb::Orbit) = orb.isChain ? length(orb) : div(length(orb) + 1, 2)
-
-minV(orb::Orbit) = Int64(ceil(3 / r(orb)))
-
-
 struct DSym
     dset::DSet
     vs::Vector{Int64}
