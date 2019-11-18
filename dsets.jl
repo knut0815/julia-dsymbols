@@ -22,12 +22,16 @@ end
 function partialOrientation(ds::DSet)
     ori = zeros(Int64, size(ds))
     ori[1] = 1
+    queue::Vector{Int64} = [1]
 
-    for D in 1 : size(ds)
+    while length(queue) > 0
+        D = pop!(queue)
+
         for i in 0 : dim(ds)
             Di = get(ds, i, D)
-            if Di != D
+            if ori[Di] == 0
                 ori[Di] = -ori[D]
+                push!(queue, Di)
             end
         end
     end
