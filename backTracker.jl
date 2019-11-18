@@ -1,6 +1,21 @@
 abstract type BackTracker{R, S} end
 
 
+function root(bt::BackTracker{R, S})::S where {R, S}
+    return S()
+end
+
+
+function extract(bt::BackTracker{R, S}, state::S)::R where {R, S}
+    return R()
+end
+
+
+function children(bt::BackTracker{R, S}, state::S)::Vector{S} where {R, S}
+    return []
+end
+
+
 function Base.iterate(
     bt::BackTracker{R, S},
     stack::Vector{Vector{S}}=[[root(bt)]]
