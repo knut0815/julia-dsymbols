@@ -1,13 +1,14 @@
 """
     abstract type BackTracker{R, S}
 
-Defines a generic interface for tree-based enumeration algorithms.
+A generic interface for enumeration algorithms based on tree traversal.
 
-An implicit tree with nodes labelled by instances of the parameter type `S`
-(the node state) is defined by specifying the state of the root and, for any
-node state appearing in the tree, the list of states of its children.  The
+An implicit enumeration tree with nodes labelled by instances of the
+parameter type `S` (the node state) is defined by the state of the root and
+a function that computes a list of child states for a given node state.  The
 enumeration is performed by traversing this tree, producing extracted
-elements of type `R` for nodes that correspond to results.
+elements of type `R` for only those nodes that correspond to finished
+results.
 
 See also: [`extract`](@ref) [`root`](@ref) [`children`](@ref)
 
@@ -49,7 +50,7 @@ abstract type BackTracker{R, S} end
 Return the result for the state `st`, if available, otherwise nothing.
 
 The state `st` in the context of the backtracker `bt` may correspond to a
-complete enumeration result, which is then returned, or a partial result, in
+finished enumeration result, which is then returned, or a partial result, in
 which case `nothing` is returned.
 """
 function extract(bt::BackTracker{R, S}, st::S)::R where {R, S}
