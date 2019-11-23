@@ -2,14 +2,14 @@ include("backTracker.jl")
 include("dsyms.jl")
 
 
-struct DSymState
+struct DSymGenState
     vs::Vector{Int64}
     curv::Rational{Int64}
     next::Int64
 end
 
 
-struct DSymGenerator <: BackTracker{DSym, DSymState}
+struct DSymGenerator <: BackTracker{DSym, DSymGenState}
     dset::DSet
     orbs::Vector{Orbit}
     orbMaps::Set{Vector{Int64}}
@@ -27,14 +27,7 @@ struct DSymGenerator <: BackTracker{DSym, DSymState}
 end
 
 
-function root(g::DSymGenerator)
-    vs = map(minV, g.orbs)
-    curv = curvature(g.dset, g.orbs, vs)
-    return DSymState(vs, curv, 1)
-end
-
-
-function extract(g::DSymGenerator, st::DSymState)
+function extract(g::DSymGenerator, st::DSymGenState)
     if st.next > length(g.orbs) && goodResult(g, st) && isCanonical(g, st)
         return DSym(g.dset, st.vs)
     end
@@ -43,22 +36,31 @@ function extract(g::DSymGenerator, st::DSymState)
 end
 
 
-function children(g::DSymGenerator, st::DSymState)
+function root(g::DSymGenerator)
+    vs = map(minV, g.orbs)
+    curv = curvature(g.dset, g.orbs, vs)
+    return DSymGenState(vs, curv, 1)
+end
+
+
+function children(g::DSymGenerator, st::DSymGenState)
     result = []
 
     if st.next <= length(g.orbs)
         if st.curv < 0
-            push!(result, DSymState(st.vs, st.curv, length(g.orbs) + 1))
+            push!(result, DSymGenState(st.vs, st.curv, length(g.orbs) + 1))
         else
             orb = g.orbs[st.next]
 
             for v in st.vs[st.next] : 7
                 vs = copy(st.vs)
                 vs[st.next] = v
-                curv = curvature(g.dset, g.orbs, vs)
 
-                if curv >= 0 || isMinimallyHyperbolic(g.dset, g.orbs, vs)
-                    push!(result, DSymState(vs, curv, st.next + 1))
+                k = orb.isChain ? 1 : 2
+                curv = st.curv - k // st.vs[st.next] + k // v
+
+                if curv >= 0 || isMinimallyHyperbolic(curv, g.orbs, vs)
+                    push!(result, DSymGenState(vs, curv, st.next + 1))
                 end
 
                 if curv < 0
@@ -72,7 +74,7 @@ function children(g::DSymGenerator, st::DSymState)
 end
 
 
-function goodResult(g::DSymGenerator, st::DSymState)
+function goodResult(g::DSymGenerator, st::DSymGenState)
     if st.curv <= 0
         return true
     else
@@ -122,7 +124,7 @@ function goodResult(g::DSymGenerator, st::DSymState)
 end
 
 
-function isCanonical(g::DSymGenerator, st::DSymState)
+function isCanonical(g::DSymGenerator, st::DSymGenState)
     vs = st.vs
 
     for m in g.orbMaps
@@ -135,9 +137,9 @@ function isCanonical(g::DSymGenerator, st::DSymState)
 end
 
 
-function isMinimallyHyperbolic(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int64})
-    curv = curvature(ds, orbs, vs)
-
+function isMinimallyHyperbolic(
+    curv::Rational{Int64}, orbs::Vector{Orbit}, vs::Vector{Int64}
+)
     if curv >= 0
         return false
     else
