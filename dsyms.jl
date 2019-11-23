@@ -23,9 +23,6 @@ struct NumberedDSym
 end
 
 
-NumberedDSym(dset::DSet, vs::Vector{Int64}, count1::Int64, count2::Int64) =
-    NumberedDSym(DSym(dset, vs), count1, count2)
-
 Base.size(ds::NumberedDSym) = size(ds.dsym)
 
 dim(ds::NumberedDSym) = dim(ds.dsym)
