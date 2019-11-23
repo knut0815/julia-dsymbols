@@ -1,5 +1,5 @@
 include("dsetGenerator.jl")
-include("dsyms.jl")
+include("dsymGenerator.jl")
 
 
 for (count1, dset) in enumerate(DSetGenerator(2, parse(Int64, ARGS[1])))

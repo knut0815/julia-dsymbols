@@ -1,6 +1,7 @@
 using Profile
 
-include("dsyms.jl")
+include("dsetGenerator.jl")
+include("dsymGenerator.jl")
 
 
 function gen(n)
