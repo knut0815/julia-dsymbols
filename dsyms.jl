@@ -74,7 +74,7 @@ function Base.show(io::IO, ds::NumberedDSym)
         end
 
         for k in 1 : length(orbs)
-            if orbs[k].index == i
+            if orbs[k].indices == [i, i + 1]
                 if first(orbs[k].elements) > 1
                     print(io, " ")
                 end

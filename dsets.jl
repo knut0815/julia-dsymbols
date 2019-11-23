@@ -16,6 +16,19 @@ function set!(ds::DSet, i::Int64, D::Int64, E::Int64)
 end
 
 
+struct Orbit
+    indices::Vector{Int64}
+    elements::Vector{Int64}
+    isChain::Bool
+end
+
+Base.length(orb::Orbit) = length(orb.elements)
+
+r(orb::Orbit) = orb.isChain ? length(orb) : div(length(orb) + 1, 2)
+
+minV(orb::Orbit) = Int64(ceil(3 / r(orb)))
+
+
 function partialOrientation(ds::DSet)
     ori = zeros(Int64, size(ds))
     ori[1] = 1
@@ -66,19 +79,6 @@ function isWeaklyOriented(ds::DSet)
 end
 
 
-struct Orbit
-    index::Int64
-    elements::Vector{Int64}
-    isChain::Bool
-end
-
-Base.length(orb::Orbit) = length(orb.elements)
-
-r(orb::Orbit) = orb.isChain ? length(orb) : div(length(orb) + 1, 2)
-
-minV(orb::Orbit) = Int64(ceil(3 / r(orb)))
-
-
 function orbits(ds::DSet, i::Int64, j::Int64)
     seen = falses(size(ds))
     result::Vector{Orbit} = []
@@ -108,7 +108,7 @@ function orbits(ds::DSet, i::Int64, j::Int64)
                 end
             end
 
-            push!(result, Orbit(i, orb, isChain))
+            push!(result, Orbit([i, j], orb, isChain))
         end
     end
 

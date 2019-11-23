@@ -155,11 +155,12 @@ end
 
 
 function onOrbits(map::Vector{Int64}, orbs::Vector{Orbit}, ds::DSet)
-    inOrb = zeros(Int64, dim(ds), size(ds))
+    inOrb = zeros(Int64, dim(ds) + 1, dim(ds) + 1, size(ds))
 
-    for i in 1 : length(orbs)
-        for D in orbs[i].elements
-            inOrb[orbs[i].index + 1, D] = i
+    for k in 1 : length(orbs)
+        for D in orbs[k].elements
+            i, j = orbs[k].indices
+            inOrb[i + 1, j + 1, D] = k
         end
     end
 
@@ -167,7 +168,7 @@ function onOrbits(map::Vector{Int64}, orbs::Vector{Orbit}, ds::DSet)
 
     for D in 1 : size(ds)
         for i in 0 : dim(ds) - 1
-            orbMap[inOrb[i + 1, D]] = inOrb[i + 1, map[D]]
+            orbMap[inOrb[i + 1, i + 2, D]] = inOrb[i + 1, i + 2, map[D]]
         end
     end
 
