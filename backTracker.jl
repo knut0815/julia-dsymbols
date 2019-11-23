@@ -1,16 +1,44 @@
 """
     abstract type BackTracker{R, S}
 
-Defines a generic interface for enumeration algorithms.
+Defines a generic interface for tree-based enumeration algorithms.
 
-The approach is to traverse an implicit tree with an instance of type `S`
-(the node state) assigned to each node, such that the current node's
-children and their states only depend on the current node's state.  The
-result type `R`, which can be identical to `S` or different from it,
-determines the type of objects to be enumerated.
+An implicit tree with nodes labelled by instances of the parameter type `S`
+(the node state) is defined by specifying the state of the root and, for any
+node state appearing in the tree, the list of states of its children.  The
+enumeration is performed by traversing this tree, producing extracted
+elements of type `R` for nodes that correspond to results.
 
-The file `partitions.jl` contains a simple example in the form of a
-backtracker that enumerates integer partitions.
+See also: [`extract`](@ref) [`root`](@ref) [`children`](@ref)
+
+# Example
+
+    # A backtracking enumerator for integer partitions.
+
+    struct PState
+        xs::Vector{Int}
+        left::Int
+        top::Int
+    end
+
+    struct Partitions <: BackTracker{Vector{Int}, PState}
+        n::Int
+    end
+
+    extract(p::Partitions, st::PState) = st.left == 0 ? st.xs : nothing
+
+    root(p::Partitions) = PState([], p.n, 1)
+
+    children(p::Partitions, st::PState) = map(
+        i -> PState(vcat(st.xs, [i]), st.left - i, max(st.top, i)),
+        st.top : st.left
+    )
+
+    # Print the partitions of the number 10.
+
+    for p in Partitions(10)
+        println(p)
+    end
 """
 abstract type BackTracker{R, S} end
 
@@ -51,7 +79,7 @@ end
 The following is a basic implementation of Julia's Iteration interface for
 backtrackers.  This enables one to write code like
 
-    for result in bt
+    for result in backtracker
         println(result)
     end
 
