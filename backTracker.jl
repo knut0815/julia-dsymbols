@@ -103,7 +103,7 @@ stacks.
 
 It is important to note that in this particular implementation, the stack is
 modified in place, so that in order to save the current tree position and
-reuse it elsewhere, as deep copy will have to be made.
+reuse it elsewhere, a deep copy will have to be made.
 """
 function Base.iterate(
     bt::BackTracker{R, S},
