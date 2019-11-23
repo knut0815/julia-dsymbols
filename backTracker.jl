@@ -88,38 +88,69 @@ end
     iterate(bt::BackTracker{R, S} [, stack::Vector{Vector{S}}]) ->
         Union{Nothing, Tuple{R, Vector{Vector{S}}}}
 
-Provides a basic backtracker implementation of Julia's iteration protocol.
+Return the next enumeration result as in Julia's iteration protocol.
 
+The implicit enumeration tree defined by the backtracker `bt` is traversed
+depth-first until either the next result is produced, in which case it is
+returned together with the current tree position, or the traversal
+terminates, in which case `nothing` is returned.
+
+The tree position is stored as a vector representing the path from the root
+to the current node, where for each node in the path, the children not yet
+visited in the traversal are listed in reverse order.  This representation
+is thus of type `Vector{Vector{S}}`, and functions effectively as a stack of
+stacks.
+
+It is important to note that in this particular implementation, the stack is
+modified in place, so that in order to save the current tree position and
+reuse it elsewhere, as deep copy will have to be made.
 """
 function Base.iterate(
     bt::BackTracker{R, S},
     stack::Vector{Vector{S}}=[[root(bt)]]
 )::Union{Nothing, Tuple{R, Vector{Vector{S}}}} where {R, S}
 
+    # Keep going until we find a result or the traversal is complete.
     while length(stack) > 0
+
+        # Grab the current node and compute its value and children.
         current::S = last(last(stack))
         value::Union{Nothing, R} = extract(bt, current)
-
         next::Vector{S} = children(bt, current)
+
+        # Does the current node have children?
         if length(next) > 0
+            # Yes, hop up onto the next level.
             push!(stack, reverse(next))
         else
+            # No, drop down to the highest level with unvisited children.
             while length(stack) > 0 && length(last(stack)) < 2
                 pop!(stack)
             end
 
+            # Remove the entry for the branch we just dropped down from.
             if length(stack) > 0
                 pop!(last(stack))
             end
         end
 
+        # If we have found a result, return it with our new position.
         if value != nothing
             return (value, stack)
         end
     end
 
+    # If we get here, the traversal, and thus the enumeration, is complete.
     return nothing
 end
 
 
+"""
+    eltype(::Type{BackTracker{R, S}})
+
+Return the element type of the given backtracker type, i.e. `R`.
+
+This is as specified in Julia's iterator protocol and can help with type
+inference.
+"""
 Base.eltype(::Type{BackTracker{R, S}}) where {R, S} = R
