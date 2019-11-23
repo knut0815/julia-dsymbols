@@ -1,6 +1,3 @@
-include("backTracker.jl")
-
-
 struct DSet
     op::Array{Int64,2}
 end
