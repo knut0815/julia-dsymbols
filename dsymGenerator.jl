@@ -15,7 +15,7 @@ struct DSymGenerator <: BackTracker{DSym, DSymState}
     orbMaps::Set{Vector{Int64}}
 
     function DSymGenerator(dset::DSet)
-        orbs = orbits(dset)
+        orbs = vcat(orbits(dset, 0, 1), orbits(dset, 1, 2))
 
         orbMaps = Set{Vector{Int64}}()
         for m in automorphisms(dset)

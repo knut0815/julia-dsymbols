@@ -3,7 +3,7 @@ include("dsymGenerator.jl")
 
 
 for (count1, dset) in enumerate(DSetGenerator(2, parse(Int64, ARGS[1])))
-    orbs = orbits(dset)
+    orbs = vcat(orbits(dset, 0, 1), orbits(dset, 1, 2))
     vs = map(minV, orbs)
     curv = curvature(dset, orbs, vs)
 

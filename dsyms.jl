@@ -13,7 +13,7 @@ dim(ds::DSym) = dim(ds.dset)
 
 get(ds::DSym, i::Int64, D::Int64) = get(ds.dset, i, D)
 
-orbits(ds::DSym) = orbits(ds.dset)
+orbits(ds::DSym, i::Int64, j::Int64) = orbits(ds.dset, i, j)
 
 
 struct NumberedDSym
@@ -29,7 +29,7 @@ dim(ds::NumberedDSym) = dim(ds.dsym)
 
 get(ds::NumberedDSym, i::Int64, D::Int64) = get(ds.dsym, i, D)
 
-orbits(ds::NumberedDSym) = orbits(ds.dsym)
+orbits(ds::NumberedDSym, i::Int64, j::Int64) = orbits(ds.dsym, i, j)
 
 
 function curvature(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int64})
@@ -66,7 +66,7 @@ function Base.show(io::IO, ds::NumberedDSym)
     end
     print(io, ":")
 
-    orbs = orbits(ds)
+    orbs = vcat(orbits(ds, 0, 1), orbits(ds, 1, 2))
 
     for i in 0 : dim(ds) - 1
         if i > 0

@@ -115,8 +115,6 @@ function orbits(ds::DSet, i::Int64, j::Int64)
     return result
 end
 
-orbits(ds::DSet) = vcat(orbits(ds, 0, 1), orbits(ds, 1, 2))
-
 
 function morphism(ds::DSet, D0::Int64)
     m = zeros(Int64, size(ds))
