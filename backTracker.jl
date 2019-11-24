@@ -1,14 +1,20 @@
 """
     BackTracker{R, S}
 
-Supertype for enumeration algorithms based on tree traversal.
+Supertype for tree-based enumeration algorithms, a.k.a. backtracking.
 
-An implicit enumeration tree with nodes labelled by instances of the
-parameter type `S` (the node state) is defined by the state of the root and
-a function that computes a list of child states for a given node state.  The
-enumeration is performed by traversing this tree, producing extracted
-elements of type `R` for only those nodes that correspond to finished
-results.
+A tree-based enumeration algorithm relies on an implicit enumeration tree of
+which only a small portion is made explicit in storage at any given time.
+Nodes are labelled by instances of the parameter type `S` (the node state).
+The tree itself is then specified by the state assigned to the root as
+produced by the `root` function, and a function `children` that for a given
+node state computes the list of corresponding child node states.
+
+The enumeration itself is performed by traversing this tree. For each node
+visited during the traversal, the `extract` function determines whether it
+corresponds to a finished result or an intermediate, unfinished state.  In
+the former case, `extract` then produces a result of type `R` from the node
+state of type `S`.
 
 See also: [`extract`](@ref) [`root`](@ref) [`children`](@ref)
 
@@ -88,7 +94,7 @@ end
     iterate(bt::BackTracker{R, S} [, stack::Vector{Vector{S}}]) ->
         Union{Nothing, Tuple{R, Vector{Vector{S}}}}
 
-Return the next enumeration result as in Julia's iteration protocol.
+Return the next result as according to Julia's iteration protocol.
 
 The implicit enumeration tree defined by the backtracker `bt` is traversed
 depth-first until either the next result is produced, in which case it is
@@ -101,9 +107,12 @@ visited in the traversal are listed in reverse order.  This representation
 is thus of type `Vector{Vector{S}}`, and functions effectively as a stack of
 stacks.
 
-It is important to note that in this particular implementation, the stack is
-modified in place, so that in order to save the current tree position and
-reuse it elsewhere, a deep copy will have to be made.
+It is important to note that in this particular implementation, the stack
+representing the tree position is modified in place, so that in order to save
+the current tree position and reuse it elsewhere, a deep copy will have to be
+made.
+
+See also: [`BackTracker`](@ref)
 """
 function Base.iterate(
     bt::BackTracker{R, S},
@@ -152,5 +161,7 @@ Return the element type of the given backtracker type, i.e. `R`.
 
 This is as specified in Julia's iterator protocol and can help with type
 inference.
+
+See also: [`BackTracker`](@ref)
 """
 Base.eltype(::Type{BackTracker{R, S}}) where {R, S} = R
