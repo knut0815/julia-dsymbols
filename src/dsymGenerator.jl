@@ -10,11 +10,11 @@ end
 
 
 struct DSymGenerator <: BackTracker{DSym, DSymGenState}
-    dset::DSet
+    dset::DelaneySet
     orbs::Vector{Orbit}
     orbMaps::Set{Vector{Int64}}
 
-    function DSymGenerator(dset::DSet)
+    function DSymGenerator(dset::DelaneySet)
         orbs = vcat(orbits(dset, 0, 1), orbits(dset, 1, 2))
 
         orbMaps = Set{Vector{Int64}}()
@@ -156,7 +156,7 @@ function isMinimallyHyperbolic(
 end
 
 
-function onOrbits(map::Vector{Int64}, orbs::Vector{Orbit}, ds::DSet)
+function onOrbits(map::Vector{Int64}, orbs::Vector{Orbit}, ds::DelaneySet)
     inOrb = zeros(Int64, dim(ds) + 1, dim(ds) + 1, size(ds))
 
     for k in 1 : length(orbs)

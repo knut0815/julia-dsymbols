@@ -2,7 +2,7 @@ include("dsets.jl")
 
 
 struct DSym
-    dset::DSet
+    dset::AbstractDelaneySet
     vs::Vector{Int64}
 end
 
@@ -32,7 +32,9 @@ get(ds::NumberedDSym, i::Int64, D::Int64) = get(ds.dsym, i, D)
 orbits(ds::NumberedDSym, i::Int64, j::Int64) = orbits(ds.dsym, i, j)
 
 
-function curvature(ds::DSet, orbs::Vector{Orbit}, vs::Vector{Int64})
+function curvature(
+    ds::AbstractDelaneySet, orbs::Vector{Orbit}, vs::Vector{Int64}
+)
     result = -size(ds)//2
 
     for i in 1 : length(orbs)

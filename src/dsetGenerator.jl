@@ -3,22 +3,25 @@ include("dsets.jl")
 
 
 struct DSetGenState
-    dset::DSet
+    dset::DelaneySetUnderConstruction
     isRemapStart::BitVector
 end
 
 
-struct DSetGenerator <: BackTracker{DSet, DSetGenState}
+struct DSetGenerator <: BackTracker{DelaneySet, DSetGenState}
     dim::Int64
     maxSize::Int64
 end
 
 
 extract(g::DSetGenerator, st::DSetGenState) =
-    firstUndefined(st.dset) == nothing ? st.dset : nothing
+    firstUndefined(st.dset) == nothing ? DelaneySet(st.dset) : nothing
 
 root(g::DSetGenerator) =
-    DSetGenState(DSet(zeros(Int64, 1, g.dim + 1)), falses(g.maxSize))
+    DSetGenState(
+        DelaneySetUnderConstruction(zeros(Int64, 1, g.dim + 1)),
+        falses(g.maxSize)
+    )
 
 
 function children(g::DSetGenerator, st::DSetGenState)
@@ -34,10 +37,12 @@ function children(g::DSetGenerator, st::DSetGenState)
                 isRemapStart = copy(st.isRemapStart)
 
                 if E > size(ds)
-                    dset = DSet(vcat(ds.op, zeros(Int64, 1, dim(ds) + 1)))
+                    dset = DelaneySetUnderConstruction(
+                        vcat(ds.op, zeros(Int64, 1, dim(ds) + 1))
+                    )
                     isRemapStart[E] = true
                 else
-                    dset = DSet(copy(ds.op))
+                    dset = DelaneySetUnderConstruction(copy(ds.op))
                 end
 
                 set!(dset, i, D, E)
@@ -61,7 +66,7 @@ function children(g::DSetGenerator, st::DSetGenState)
 end
 
 
-function firstUndefined(ds::DSet)
+function firstUndefined(ds::AbstractDelaneySet)
     for D in 1 : size(ds)
         for i in 0 : dim(ds)
             if get(ds, i, D) == 0
@@ -74,7 +79,7 @@ function firstUndefined(ds::DSet)
 end
 
 
-function scan02Orbit(ds::DSet, D::Int64)
+function scan02Orbit(ds::AbstractDelaneySet, D::Int64)
     head, i = scan(ds, [0, 2, 0, 2], D, 4)
     tail, j = scan(ds, [2, 0, 2, 0], D, 4 - i)
 
@@ -82,7 +87,7 @@ function scan02Orbit(ds::DSet, D::Int64)
 end
 
 
-function scan(ds::DSet, w::Vector{Int64}, D::Int64, limit::Int64)
+function scan(ds::AbstractDelaneySet, w::Vector{Int64}, D::Int64, limit::Int64)
     E, k = D, 1
 
     while k <= limit && get(ds, w[k], E) != 0
@@ -94,7 +99,7 @@ function scan(ds::DSet, w::Vector{Int64}, D::Int64, limit::Int64)
 end
 
 
-function checkCanonicity!(ds::DSet, isRemapStart::BitVector)
+function checkCanonicity!(ds::AbstractDelaneySet, isRemapStart::BitVector)
     n2o = zeros(Int64, size(ds))
     o2n = zeros(Int64, size(ds))
 
@@ -114,7 +119,7 @@ end
 
 
 function compareRenumberedFrom(
-    ds::DSet, D0::Int64, n2o::Vector{Int64}, o2n::Vector{Int64}
+    ds::AbstractDelaneySet, D0::Int64, n2o::Vector{Int64}, o2n::Vector{Int64}
 )
     fill!(n2o, zero(Int64))
     fill!(o2n, zero(Int64))

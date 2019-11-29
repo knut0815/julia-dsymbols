@@ -1,19 +1,43 @@
-struct DSet
+abstract type AbstractDelaneySet end
+
+
+
+struct DelaneySetUnderConstruction <: AbstractDelaneySet
     op::Array{Int64,2}
 end
 
+Base.size(ds::DelaneySetUnderConstruction) = first(size(ds.op))
 
-Base.size(ds::DSet) = first(size(ds.op))
+dim(ds::DelaneySetUnderConstruction) = last(size(ds.op)) - 1
 
-dim(ds::DSet) = last(size(ds.op)) - 1
+get(ds::DelaneySetUnderConstruction, i::Int64, D::Int64) =
+    1 <= D <= size(ds) ? ds.op[D, i + 1] : 0
 
-get(ds::DSet, i::Int64, D::Int64) = 1 <= D <= size(ds) ? ds.op[D, i + 1] : 0
-
-
-function set!(ds::DSet, i::Int64, D::Int64, E::Int64)
+function set!(ds::DelaneySetUnderConstruction, i::Int64, D::Int64, E::Int64)
     ds.op[D, i + 1] = E
     ds.op[E, i + 1] = D
 end
+
+
+
+struct DelaneySet <: AbstractDelaneySet
+    op::Array{Int64,2}
+
+    function DelaneySet(op::Array{Int64,2})
+        # TODO add consistency checks here
+        new(op)
+    end
+end
+
+DelaneySet(ds::DelaneySetUnderConstruction) = DelaneySet(ds.op)
+
+Base.size(ds::DelaneySet) = first(size(ds.op))
+
+dim(ds::DelaneySet) = last(size(ds.op)) - 1
+
+get(ds::DelaneySet, i::Int64, D::Int64) =
+    1 <= D <= size(ds) ? ds.op[D, i + 1] : 0
+
 
 
 struct Orbit
@@ -29,7 +53,8 @@ r(orb::Orbit) = orb.isChain ? length(orb) : div(length(orb) + 1, 2)
 minV(orb::Orbit) = Int64(ceil(3 / r(orb)))
 
 
-function partialOrientation(ds::DSet)
+
+function partialOrientation(ds::AbstractDelaneySet)
     ori = zeros(Int64, size(ds))
     ori[1] = 1
     queue::Vector{Int64} = [1]
@@ -50,7 +75,7 @@ function partialOrientation(ds::DSet)
 end
 
 
-function isLoopless(ds::DSet)
+function isLoopless(ds::AbstractDelaneySet)
     for i in 0 : dim(ds)
         for D in 1 : size(ds)
             if get(ds, i, D) == D
@@ -63,7 +88,7 @@ function isLoopless(ds::DSet)
 end
 
 
-function isWeaklyOriented(ds::DSet)
+function isWeaklyOriented(ds::AbstractDelaneySet)
     ori = partialOrientation(ds)
 
     for i in 0 : dim(ds)
@@ -79,7 +104,7 @@ function isWeaklyOriented(ds::DSet)
 end
 
 
-function orbits(ds::DSet, i::Int64, j::Int64)
+function orbits(ds::AbstractDelaneySet, i::Int64, j::Int64)
     seen = falses(size(ds))
     result::Vector{Orbit} = []
 
@@ -116,7 +141,7 @@ function orbits(ds::DSet, i::Int64, j::Int64)
 end
 
 
-function morphism(ds::DSet, D0::Int64)
+function morphism(ds::AbstractDelaneySet, D0::Int64)
     m = zeros(Int64, size(ds))
     m[1] = D0
     q = [(1, D0)]
@@ -143,7 +168,7 @@ function morphism(ds::DSet, D0::Int64)
 end
 
 
-function automorphisms(ds::DSet)
+function automorphisms(ds::AbstractDelaneySet)
     result::Vector{Vector{Int64}} = []
 
     for D in 1 : size(ds)
