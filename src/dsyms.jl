@@ -1,35 +1,44 @@
 include("dsets.jl")
 
 
-struct DSym
-    dset::AbstractDelaneySet
+abstract type AbstractDelaneySymbol <: AbstractDelaneySet end
+
+setCount(ds::AbstractDelaneySymbol) = 1
+
+symbolCount(ds::AbstractDelaneySymbol) = 1
+
+
+struct DelaneySymbol <: AbstractDelaneySymbol
+    dset::DelaneySet
     vs::Vector{Int64}
 end
 
 
-Base.size(ds::DSym) = size(ds.dset)
+Base.size(ds::DelaneySymbol) = size(ds.dset)
 
-dim(ds::DSym) = dim(ds.dset)
+dim(ds::DelaneySymbol) = dim(ds.dset)
 
-get(ds::DSym, i::Int64, D::Int64) = get(ds.dset, i, D)
-
-orbits(ds::DSym, i::Int64, j::Int64) = orbits(ds.dset, i, j)
+get(ds::DelaneySymbol, i::Int64, D::Int64) = get(ds.dset, i, D)
 
 
-struct NumberedDSym
-    dsym::DSym
-    count1::Int64
-    count2::Int64
+
+struct NumberedDelaneySymbol <: AbstractDelaneySymbol
+    dsym::DelaneySymbol
+    setCount::Int64
+    symbolCount::Int64
 end
 
 
-Base.size(ds::NumberedDSym) = size(ds.dsym)
+Base.size(ds::NumberedDelaneySymbol) = size(ds.dsym)
 
-dim(ds::NumberedDSym) = dim(ds.dsym)
+dim(ds::NumberedDelaneySymbol) = dim(ds.dsym)
 
-get(ds::NumberedDSym, i::Int64, D::Int64) = get(ds.dsym, i, D)
+get(ds::NumberedDelaneySymbol, i::Int64, D::Int64) = get(ds.dsym, i, D)
 
-orbits(ds::NumberedDSym, i::Int64, j::Int64) = orbits(ds.dsym, i, j)
+setCount(ds::NumberedDelaneySymbol) = ds.setCount
+
+symbolCount(ds::NumberedDelaneySymbol) = ds.symbolCount
+
 
 
 function curvature(
@@ -45,8 +54,8 @@ function curvature(
 end
 
 
-function Base.show(io::IO, ds::NumberedDSym)
-    print(io, "<$(ds.count1).$(ds.count2):$(size(ds))")
+function Base.show(io::IO, ds::AbstractDelaneySymbol)
+    print(io, "<$(setCount(ds)).$(symbolCount(ds)):$(size(ds))")
     if dim(ds) != 2
         print(io, " ", dim(ds))
     end

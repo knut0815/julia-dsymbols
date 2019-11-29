@@ -9,7 +9,7 @@ struct DSymGenState
 end
 
 
-struct DSymGenerator <: BackTracker{DSym, DSymGenState}
+struct DSymGenerator <: BackTracker{DelaneySymbol, DSymGenState}
     dset::DelaneySet
     orbs::Vector{Orbit}
     orbMaps::Set{Vector{Int64}}
@@ -29,7 +29,7 @@ end
 
 function extract(g::DSymGenerator, st::DSymGenState)
     if st.next > length(g.orbs) && goodResult(g, st) && isCanonical(g, st)
-        return DSym(g.dset, st.vs)
+        return DelaneySymbol(g.dset, st.vs)
     end
 
     return nothing
