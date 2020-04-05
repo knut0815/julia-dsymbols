@@ -6,6 +6,9 @@ struct DelaneySetUnderConstruction <: AbstractDelaneySet
     op::Array{Int64,2}
 end
 
+DelaneySetUnderConstruction(size, dim) =
+    DelaneySetUnderConstruction(zeros(Int64, size, dim + 1))
+
 Base.size(ds::DelaneySetUnderConstruction) = first(size(ds.op))
 
 dim(ds::DelaneySetUnderConstruction) = last(size(ds.op)) - 1
@@ -104,6 +107,9 @@ function isWeaklyOriented(ds::AbstractDelaneySet)
 end
 
 
+isOriented(ds::AbstractDelaneySet) = isLoopless(ds) && isWeaklyOriented(ds)
+
+
 function orbits(ds::AbstractDelaneySet, i::Int64, j::Int64)
     seen = falses(size(ds))
     result::Vector{Orbit} = []
@@ -179,4 +185,30 @@ function automorphisms(ds::AbstractDelaneySet)
     end
 
     return result
+end
+
+
+function orientedCover(ds::AbstractDelaneySet)
+    if isOriented(ds)
+        return ds
+    else
+        sz = size(ds)
+        ori = partialOrientation(ds)
+        cov = DelaneySetUnderConstruction(2 * sz, dim(ds))
+
+        for i in 0 : dim(ds)
+            for D in 1 : sz
+                Di = get(ds, i, D)
+                if ori[Di] != ori[D]
+                    set!(cov, i, D, Di)
+                    set!(cov, i, D + sz, Di + sz)
+                else
+                    set!(cov, i, D, Di + sz)
+                    set!(cov, i, D + sz, Di)
+                end
+            end
+        end
+
+        return DelaneySet(cov)
+    end
 end
