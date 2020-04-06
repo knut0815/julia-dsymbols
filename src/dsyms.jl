@@ -8,6 +8,47 @@ setCount(ds::AbstractDelaneySymbol) = 1
 symbolCount(ds::AbstractDelaneySymbol) = 1
 
 
+
+function collectOrbits(ds::DelaneySet)
+    allOrbits::Vector{Orbit} = []
+    orbitIndex = zeros(Int64, dim(ds), size(ds))
+
+    for i in 1 : dim(ds)
+        for orb in orbits(ds, i - 1, i)
+            push!(allOrbits, orb)
+            for D in orb.elements
+                orbitIndex[i, D] = length(allOrbits)
+            end
+        end
+    end
+
+    return (allOrbits, orbitIndex)
+end
+
+
+
+struct DelaneySymbolUnderConstruction <: AbstractDelaneySymbol
+    dset::DelaneySet
+    orbits::Vector{Orbit}
+    orbitIndex::Array{Int64, 2}
+    vs::Vector{Int64}
+
+    function DelaneySymbolUnderConstruction(dset::DelaneySet)
+        (allOrbits, orbitIndex) = collectOrbits(dset)
+        new(dset, allOrbits, orbitIndex, zeros(Int64, length(allOrbits)))
+    end
+end
+
+
+Base.size(ds::DelaneySymbolUnderConstruction) = size(ds.dset)
+
+dim(ds::DelaneySymbolUnderConstruction) = dim(ds.dset)
+
+get(ds::DelaneySymbolUnderConstruction, i::Int64, D::Int64) =
+    get(ds.dset, i, D)
+
+
+
 struct DelaneySymbol <: AbstractDelaneySymbol
     dset::DelaneySet
     vs::Vector{Int64}
