@@ -47,6 +47,30 @@ dim(ds::DelaneySymbolUnderConstruction) = dim(ds.dset)
 get(ds::DelaneySymbolUnderConstruction, i::Int64, D::Int64) =
     get(ds.dset, i, D)
 
+function getV(ds::DelaneySymbolUnderConstruction, i::Int64, j::Int64, D::Int64)
+    if !(1 <= D <= size(ds))
+        return 0
+    elseif j == i + 1
+        return ds.vs[ds.orbitIndex[j, D]]
+    elseif i == j + 1
+        return ds.vs[ds.orbitIndex[i, D]]
+    elseif j != i && get(ds, i, D) == get(ds, j, D)
+        return 2
+    else
+        return 1
+    end
+end
+
+function setV!(
+    ds::DelaneySymbolUnderConstruction, i::Int64, j::Int64, D::Int64, v::Int64
+)
+    if j == i + 1
+        ds.vs[ds.orbitIndex[j, D]] = v
+    elseif i == j + 1
+        ds.vs[ds.orbitIndex[i, D]] = v
+    end
+end
+
 
 
 struct DelaneySymbol <: AbstractDelaneySymbol
