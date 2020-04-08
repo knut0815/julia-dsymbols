@@ -151,19 +151,6 @@ symbolCount(ds::NumberedDelaneySymbol) = ds.symbolCount
 
 
 
-function curvature(
-    ds::AbstractDelaneySet, orbs::Vector{Orbit}, vs::Vector{Int64}
-)
-    result = -size(ds)//2
-
-    for i in 1 : length(orbs)
-        result += (orbs[i].isChain ? 1 : 2) // vs[i]
-    end
-
-    return result
-end
-
-
 function Base.show(io::IO, ds::AbstractDelaneySymbol)
     print(io, "<$(setCount(ds)).$(symbolCount(ds)):$(size(ds))")
     if dim(ds) != 2

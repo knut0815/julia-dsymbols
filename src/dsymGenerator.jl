@@ -74,6 +74,19 @@ function children(g::DSymGenerator, st::DSymGenState)
 end
 
 
+function curvature(
+    ds::AbstractDelaneySet, orbs::Vector{Orbit}, vs::Vector{Int64}
+)
+    result = -size(ds)//2
+
+    for i in 1 : length(orbs)
+        result += (orbs[i].isChain ? 1 : 2) // vs[i]
+    end
+
+    return result
+end
+
+
 function goodResult(g::DSymGenerator, st::DSymGenState)
     if st.curv <= 0
         return true
