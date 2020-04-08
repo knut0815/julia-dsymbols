@@ -7,6 +7,9 @@ setCount(ds::AbstractDelaneySymbol) = 1
 
 symbolCount(ds::AbstractDelaneySymbol) = 1
 
+m(ds::AbstractDelaneySymbol, i::Int64, j::Int64, D::Int64) =
+    r(ds, i, j, D) * v(ds, i, j, D)
+
 
 
 function collectOrbits(ds::DelaneySet)
@@ -27,27 +30,32 @@ end
 
 
 
-struct DelaneySymbolUnderConstruction <: AbstractDelaneySymbol
+struct DelaneySymbol <: AbstractDelaneySymbol
     dset::DelaneySet
     orbits::Vector{Orbit}
     orbitIndex::Array{Int64, 2}
     vs::Vector{Int64}
 
-    function DelaneySymbolUnderConstruction(dset::DelaneySet)
+    function DelaneySymbol(dset::DelaneySet)
         (allOrbits, orbitIndex) = collectOrbits(dset)
         new(dset, allOrbits, orbitIndex, zeros(Int64, length(allOrbits)))
+    end
+
+    function DelaneySymbol(dset::DelaneySet, vs::Vector{Int64})
+        (allOrbits, orbitIndex) = collectOrbits(dset)
+        new(dset, allOrbits, orbitIndex, copy(vs))
     end
 end
 
 
-Base.size(ds::DelaneySymbolUnderConstruction) = size(ds.dset)
+Base.size(ds::DelaneySymbol) = size(ds.dset)
 
-dim(ds::DelaneySymbolUnderConstruction) = dim(ds.dset)
+dim(ds::DelaneySymbol) = dim(ds.dset)
 
-get(ds::DelaneySymbolUnderConstruction, i::Int64, D::Int64) =
-    get(ds.dset, i, D)
+get(ds::DelaneySymbol, i::Int64, D::Int64) = get(ds.dset, i, D)
 
-function getV(ds::DelaneySymbolUnderConstruction, i::Int64, j::Int64, D::Int64)
+
+function v(ds::DelaneySymbol, i::Int64, j::Int64, D::Int64)
     if !(1 <= D <= size(ds))
         return 0
     elseif j == i + 1
@@ -61,44 +69,81 @@ function getV(ds::DelaneySymbolUnderConstruction, i::Int64, j::Int64, D::Int64)
     end
 end
 
-function setV!(
-    ds::DelaneySymbolUnderConstruction, i::Int64, j::Int64, D::Int64, v::Int64
-)
-    if j == i + 1
-        ds.vs[ds.orbitIndex[j, D]] = v
+
+function r(ds::DelaneySymbol, i::Int64, j::Int64, D::Int64)
+    if !(1 <= D <= size(ds))
+        return 0
+    elseif j == i + 1
+        return r(ds.orbits[ds.orbitIndex[j, D]])
     elseif i == j + 1
-        ds.vs[ds.orbitIndex[i, D]] = v
+        return r(ds.orbits[ds.orbitIndex[i, D]])
+    elseif j != i && get(ds, i, D) == get(ds, j, D)
+        return 1
+    else
+        return 2
     end
 end
 
 
 
-struct DelaneySymbol <: AbstractDelaneySymbol
-    dset::DelaneySet
-    vs::Vector{Int64}
+struct DelaneySymbolUnderConstruction <: AbstractDelaneySymbol
+    ds::DelaneySymbol
+
+    function DelaneySymbolUnderConstruction(ds::DelaneySymbol)
+        new(DelaneySymbol(ds.dset, copy(ds.vs)))
+    end
 end
 
+DelaneySymbolUnderConstruction(dset::DelaneySet) =
+    DelaneySymbolUnderConstruction(DelaneySymbol(dset))
 
-Base.size(ds::DelaneySymbol) = size(ds.dset)
+DelaneySymbolUnderConstruction(dset::DelaneySet, vs::Vector{Int64}) =
+    DelaneySymbolUnderConstruction(DelaneySymbol(dset, vs))
 
-dim(ds::DelaneySymbol) = dim(ds.dset)
 
-get(ds::DelaneySymbol, i::Int64, D::Int64) = get(ds.dset, i, D)
+Base.size(ds::DelaneySymbolUnderConstruction) = size(ds.ds)
+
+dim(ds::DelaneySymbolUnderConstruction) = dim(ds.ds)
+
+get(ds::DelaneySymbolUnderConstruction, i::Int64, D::Int64) = get(ds.ds, i, D)
+
+v(ds::DelaneySymbolUnderConstruction, i::Int64, j::Int64, D::Int64) =
+    v(ds.ds, i, j, D)
+
+r(ds::DelaneySymbolUnderConstruction, i::Int64, j::Int64, D::Int64) =
+    r(ds.ds, i, j, D)
+
+
+function setV!(
+    ds::DelaneySymbolUnderConstruction, i::Int64, j::Int64, D::Int64, v::Int64
+)
+    if j == i + 1
+        ds.ds.vs[ds.ds.orbitIndex[j, D]] = v
+    elseif i == j + 1
+        ds.ds.vs[ds.ds.orbitIndex[i, D]] = v
+    end
+end
 
 
 
 struct NumberedDelaneySymbol <: AbstractDelaneySymbol
-    dsym::DelaneySymbol
+    ds::AbstractDelaneySymbol
     setCount::Int64
     symbolCount::Int64
 end
 
 
-Base.size(ds::NumberedDelaneySymbol) = size(ds.dsym)
+Base.size(ds::NumberedDelaneySymbol) = size(ds.ds)
 
-dim(ds::NumberedDelaneySymbol) = dim(ds.dsym)
+dim(ds::NumberedDelaneySymbol) = dim(ds.ds)
 
-get(ds::NumberedDelaneySymbol, i::Int64, D::Int64) = get(ds.dsym, i, D)
+get(ds::NumberedDelaneySymbol, i::Int64, D::Int64) = get(ds.ds, i, D)
+
+v(ds::NumberedDelaneySymbol, i::Int64, j::Int64, D::Int64) =
+    v(ds.ds, i, j, D)
+
+r(ds::NumberedDelaneySymbol, i::Int64, j::Int64, D::Int64) =
+    r(ds.ds, i, j, D)
 
 setCount(ds::NumberedDelaneySymbol) = ds.setCount
 
@@ -151,10 +196,11 @@ function Base.show(io::IO, ds::AbstractDelaneySymbol)
 
         for k in 1 : length(orbs)
             if orbs[k].indices == [i, i + 1]
-                if first(orbs[k].elements) > 1
+                D = first(orbs[k].elements)
+                if D > 1
                     print(io, " ")
                 end
-                print(io, r(orbs[k]) * ds.dsym.vs[k])
+                print(io, r(orbs[k]) * v(ds, i, i + 1, D))
             end
         end
     end
