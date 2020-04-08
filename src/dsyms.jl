@@ -187,21 +187,17 @@ function Base.show(io::IO, ds::AbstractDelaneySymbol)
     end
     print(io, ":")
 
-    orbs = vcat(orbits(ds, 0, 1), orbits(ds, 1, 2))
-
     for i in 0 : dim(ds) - 1
         if i > 0
             print(",")
         end
 
-        for k in 1 : length(orbs)
-            if orbs[k].indices == [i, i + 1]
-                D = first(orbs[k].elements)
-                if D > 1
-                    print(io, " ")
-                end
-                print(io, r(orbs[k]) * v(ds, i, i + 1, D))
+        for orb in orbits(ds, i, i + 1)
+            D = first(orb.elements)
+            if D > 1
+                print(io, " ")
             end
+            print(io, m(ds, i, i + 1, D))
         end
     end
 
