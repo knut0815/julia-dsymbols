@@ -100,6 +100,8 @@ DelaneySymbolUnderConstruction(dset::DelaneySet) =
 DelaneySymbolUnderConstruction(dset::DelaneySet, vs::Vector{Int64}) =
     DelaneySymbolUnderConstruction(DelaneySymbol(dset, vs))
 
+DelaneySymbol(ds::DelaneySymbolUnderConstruction) = ds.ds
+
 
 Base.size(ds::DelaneySymbolUnderConstruction) = size(ds.ds)
 
@@ -148,3 +150,25 @@ r(ds::NumberedDelaneySymbol, i::Int64, j::Int64, D::Int64) =
 setCount(ds::NumberedDelaneySymbol) = ds.setCount
 
 symbolCount(ds::NumberedDelaneySymbol) = ds.symbolCount
+
+
+
+function orientedCover(ds::AbstractDelaneySymbol)
+    if isOriented(ds)
+        return ds
+    else
+        dset = invoke(orientedCover, Tuple{AbstractDelaneySet}, ds)
+        cov = DelaneySymbolUnderConstruction(dset)
+
+        for i in 1 : dim(ds)
+            for orb in orbits(ds, i - 1, i)
+                D = first(orb.elements)
+                E = (D - 1) % size(ds) + 1
+                vD = div(m(ds, i - 1, i, E), r(ds, i - 1, i, D))
+                setV!(cov, i - 1, i, D, vD)
+            end
+        end
+
+        return DelaneySymbol(cov)
+    end
+end
