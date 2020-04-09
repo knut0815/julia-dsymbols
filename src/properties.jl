@@ -82,6 +82,14 @@ end
 function cutsOffDisk(
     ds::AbstractDelaneySymbol, cut::Vector{Int64}, allow2Cone::Bool=false
 )
+    patch, rest = splitAlong(ds, cut)
+
+    if size(patch) == length(cut)
+        return false
+    end
+
+    # TODO implement remaining tests
+
     return false
 end
 
@@ -137,4 +145,16 @@ function splitAlong(ds::AbstractDelaneySymbol, cut::Vector{Int64})
     end
 
     return result
+end
+
+
+function eulerCharacteristic(ds::AbstractDelaneySet)
+    nrLoops(i) = count(D -> get(ds, i, D) == D, 1 : size(ds))
+    nrOrbits(i, j) = length(orbits(ds, i, j))
+
+    nf = size(ds)
+    ne = div(3 * nf + nrLoops(0) + nrLoops(1) + nrLoops(2), 2)
+    nv = nrOrbits(0, 1) + nrOrbits(0, 2) + nrOrbits(1, 2)
+
+    return nf - ne + nv
 end
