@@ -1,5 +1,11 @@
 abstract type AbstractDelaneySet end
 
+setCount(ds::AbstractDelaneySet) = 1
+
+symbolCount(ds::AbstractDelaneySet) = 1
+
+m(ds::AbstractDelaneySet, i::Int64, j::Int64, D::Int64) = 0
+
 
 
 struct DelaneySetUnderConstruction <: AbstractDelaneySet
@@ -211,4 +217,46 @@ function orientedCover(ds::AbstractDelaneySet)
 
         return DelaneySet(cov)
     end
+end
+
+
+
+function Base.show(io::IO, ds::AbstractDelaneySet)
+    print(io, "<$(setCount(ds)).$(symbolCount(ds)):$(size(ds))")
+    if dim(ds) != 2
+        print(io, " ", dim(ds))
+    end
+    print(io, ":")
+
+    for i in 0 : dim(ds)
+        if i > 0
+            print(",")
+        end
+        for D in 1 : size(ds)
+            E = get(ds, i, D)
+            if E == 0 || E >= D
+                if D > 1
+                    print(io, " ")
+                end
+                print(io, E)
+            end
+        end
+    end
+    print(io, ":")
+
+    for i in 0 : dim(ds) - 1
+        if i > 0
+            print(",")
+        end
+
+        for orb in orbits(ds, i, i + 1)
+            D = first(orb.elements)
+            if D > 1
+                print(io, " ")
+            end
+            print(io, m(ds, i, i + 1, D))
+        end
+    end
+
+    print(io, ">")
 end
