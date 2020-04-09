@@ -84,3 +84,57 @@ function cutsOffDisk(
 )
     return false
 end
+
+
+function splitAlong(ds::AbstractDelaneySymbol, cut::Vector{Int64})
+    inCut = falses(size(ds))
+    for D in cut
+        inCut[D] = inCut[get(ds, 1, D)] = true
+    end
+
+    result = []
+    for seed in [first(cut), get(ds, 1, first(cut))]
+        src2img = zeros(Int64, size(ds))
+        img2src = zeros(Int64, size(ds))
+        count = 0
+        queue = [seed]
+
+        while length(queue) > 0
+            D = popfirst!(queue)
+            if src2img[D] == 0
+                count += 1
+                src2img[D] = count
+                img2src[count] = D
+
+                for i in 0 : dim(ds)
+                    if i != 1 || !inCut[D]
+                        push!(queue, get(ds, i, D))
+                    end
+                end
+            end
+        end
+
+        dset = DelaneySetUnderConstruction(count, dim(ds))
+        for D in 1 : count
+            for i in 0 : dim(ds)
+                E = img2src[D]
+                if i == 1 && inCut[E]
+                    set!(dset, i, D, D)
+                else
+                    set!(dset, i, D, src2img[get(ds, i, E)])
+                end
+            end
+        end
+
+        part = DelaneySymbolUnderConstruction(dset)
+        for D in 1 : count
+            for i in 1 : dim(ds)
+                setV!(part, i - 1, i, D, v(ds, i - 1, i, img2src[D]))
+            end
+        end
+
+        push!(result, DelaneySymbol(part))
+    end
+
+    return result
+end
