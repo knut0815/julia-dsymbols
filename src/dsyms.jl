@@ -161,10 +161,10 @@ function orientedCover(ds::AbstractDelaneySymbol)
         cov = DelaneySymbolUnderConstruction(dset)
 
         for i in 1 : dim(ds)
-            for orb in orbits(ds, i - 1, i)
+            for orb in orbits(cov, i - 1, i)
                 D = first(orb.elements)
                 E = (D - 1) % size(ds) + 1
-                vD = div(m(ds, i - 1, i, E), r(ds, i - 1, i, D))
+                vD = div(m(ds, i - 1, i, E), r(cov, i - 1, i, D))
                 setV!(cov, i - 1, i, D, vD)
             end
         end
