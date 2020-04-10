@@ -82,15 +82,40 @@ end
 function cutsOffDisk(
     ds::AbstractDelaneySymbol, cut::Vector{Int64}, allow2Cone::Bool=false
 )
+    checkCones(cones) = cones == [] || (allow2Cone && cones == [2])
+
     patch, rest = splitAlong(ds, cut)
 
     if size(patch) == length(cut)
         return false
     end
 
-    # TODO implement remaining tests
+    if eulerCharacteristic(ds) > 0
+        if size(patch) == size(ds)
+            vs = [v(ds, 0, 1, cut[1]), v(ds, 1, 2, cut[1])]
+            if length(cut) > 2
+                push!(vs, v(ds, 1, 2, cut[2]))
+            end
 
-    return false
+            if checkCones(filter(v -> v > 1, vs))
+                return false
+            end
+        end
+
+        if (
+            size(patch) == size(ds) - length(cut) &&
+            all(D -> v(ds, 0, 1, D) == 1 && v(ds, 1, 2, D) == 1, cut) &&
+            checkCones(coneDegrees(rest))
+        )
+            return false
+        end
+    end
+
+    return (
+        isWeaklyOriented(patch) &&
+        eulerCharacteristic(patch) == 1 &&
+        checkCones(coneDegrees(patch))
+    )
 end
 
 
@@ -157,4 +182,22 @@ function eulerCharacteristic(ds::AbstractDelaneySet)
     nv = nrOrbits(0, 1) + nrOrbits(0, 2) + nrOrbits(1, 2)
 
     return nf - ne + nv
+end
+
+
+function coneDegrees(ds::AbstractDelaneySymbol)
+    result = []
+
+    for i in 0 : dim(ds) - 1
+        for j in i + 1 : dim(ds)
+            for orb in orbits(ds, i, j)
+                vOrb = v(ds, i, j, first(orb.elements))
+                if vOrb > 1 && !orb.isChain
+                    push!(result, vOrb)
+                end
+            end
+        end
+    end
+
+    return result
 end
