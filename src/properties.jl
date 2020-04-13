@@ -26,6 +26,7 @@ end
 function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
     ds = orientedCover(dsRaw)
     ori = partialOrientation(ds)
+    hasHandles = eulerCharacteristic(ds) <= 0
 
     for A1 in filter(D -> ori[D] > 0, 1 : size(ds))
         seen1 = falses(size(ds))
@@ -41,7 +42,7 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
 
             for B2 in DoubleStep(ds, 2, 1, get(ds, 2, A2))
                 if seen2[B2]
-                    if B2 == A1 && cutsOffDisk(ds, [A1, A2], true)
+                    if B2 == A1 && cutsOffDisk(ds, hasHandles, A1, A2)
                         return false
                     else
                         break
@@ -61,7 +62,10 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
 
                     for T in DoubleStep(ds, 2, 1, get(ds, 2, B1))
                         if seen4[T]
-                            if T == A1 && cutsOffDisk(ds, [A1, A2, B2, B1])
+                            if (
+                                T == A1 &&
+                                cutsOffDisk(ds, hasHandles, A1, A2, B2, B1)
+                            )
                                 return false
                             else
                                 break
@@ -80,36 +84,39 @@ end
 
 
 function cutsOffDisk(
-    ds::AbstractDelaneySymbol, cut::Vector{Int64}, allow2Cone::Bool=false
+    ds::AbstractDelaneySymbol, hasHandles::Bool,
+    A::Int64, B::Int64
 )
-    checkCones(cones) = cones == [] || (allow2Cone && cones == [2])
+    checkCones(cones) = cones == [] || cones == [2]
 
-    patch, rest = splitAlong(ds, cut)
-
-    if size(patch) == length(cut)
+    if get(ds, 0, A) == B && get(ds, 2, A) == B
         return false
     end
 
-    if eulerCharacteristic(ds) > 0
-        if size(patch) == size(ds)
-            vs = [v(ds, 0, 1, cut[1]), v(ds, 1, 2, cut[1])]
-            if length(cut) > 2
-                push!(vs, v(ds, 1, 2, cut[2]))
-            end
+    if !hasHandles
+        A1 = get(ds, 1, A)
+        B1 = get(ds, 1, B)
 
+        if A1 == B
+            vs = [v(ds, 0, 1, A), v(ds, 1, 2, A)]
             if checkCones(filter(v -> v > 1, vs))
                 return false
             end
         end
 
         if (
-            size(patch) == size(ds) - length(cut) &&
-            all(D -> v(ds, 0, 1, D) == 1 && v(ds, 1, 2, D) == 1, cut) &&
-            checkCones(coneDegrees(rest))
+            (get(ds, 0, A1) == B1 || get(ds, 2, A1) == B1) &&
+            v(ds, 0, 1, A) == 1 && v(ds, 1, 2, A) == 1 &&
+            v(ds, 0, 1, B) == 1 && v(ds, 1, 2, B) == 1
         )
-            return false
+            rest = splitAlong(ds, [A, B], A1)
+            if checkCones(coneDegrees(rest))
+                return false
+            end
         end
     end
+
+    patch = splitAlong(ds, [A, B], A)
 
     return (
         isWeaklyOriented(patch) &&
@@ -119,57 +126,101 @@ function cutsOffDisk(
 end
 
 
-function splitAlong(ds::AbstractDelaneySymbol, cut::Vector{Int64})
+function cutsOffDisk(
+    ds::AbstractDelaneySymbol, hasHandles::Bool,
+    A::Int64, B::Int64, C::Int64, D::Int64
+)
+    checkCones(cones) = cones == []
+
+    if get(ds, 0, A) == B && get(ds, 2, B) == C && get(ds, 0, C) == D
+        return false
+    end
+
+    if !hasHandles
+        A1 = get(ds, 1, A)
+        B1 = get(ds, 1, B)
+        C1 = get(ds, 1, C)
+        D1 = get(ds, 1, D)
+
+        if (A1 == B && C1 == D) || (A1 == D && B1 == C)
+            vs = [v(ds, 0, 1, A), v(ds, 1, 2, A), v(ds, 1, 2, B)]
+            if checkCones(filter(v -> v > 1, vs))
+                return false
+            end
+        end
+
+        if (
+            get(ds, 0, A1) == B1 &&
+            get(ds, 2, B1) == C1 &&
+            get(ds, 0, C1) == D1 &&
+            v(ds, 0, 1, A) == 1 && v(ds, 1, 2, A) == 1 &&
+            v(ds, 0, 1, B) == 1 && v(ds, 1, 2, B) == 1 &&
+            v(ds, 0, 1, C) == 1 && v(ds, 1, 2, C) == 1 &&
+            v(ds, 0, 1, D) == 1 && v(ds, 1, 2, D) == 1
+        )
+            rest = splitAlong(ds, [A, B, C, D], A1)
+            if checkCones(coneDegrees(rest))
+                return false
+            end
+        end
+    end
+
+    patch = splitAlong(ds, [A, B, C, D], A)
+
+    return (
+        isWeaklyOriented(patch) &&
+        eulerCharacteristic(patch) == 1 &&
+        checkCones(coneDegrees(patch))
+    )
+end
+
+
+function splitAlong(ds::AbstractDelaneySymbol, cut::Vector{Int64}, seed::Int64)
     inCut = falses(size(ds))
     for D in cut
         inCut[D] = inCut[get(ds, 1, D)] = true
     end
 
-    result = []
-    for seed in [first(cut), get(ds, 1, first(cut))]
-        src2img = zeros(Int64, size(ds))
-        img2src = zeros(Int64, size(ds))
-        count = 0
-        queue = [seed]
+    src2img = zeros(Int64, size(ds))
+    img2src = zeros(Int64, size(ds))
+    count = 0
+    queue = [seed]
 
-        while length(queue) > 0
-            D = popfirst!(queue)
-            if src2img[D] == 0
-                count += 1
-                src2img[D] = count
-                img2src[count] = D
+    while length(queue) > 0
+        D = popfirst!(queue)
+        if src2img[D] == 0
+            count += 1
+            src2img[D] = count
+            img2src[count] = D
 
-                for i in 0 : dim(ds)
-                    if i != 1 || !inCut[D]
-                        push!(queue, get(ds, i, D))
-                    end
-                end
-            end
-        end
-
-        dset = DelaneySetUnderConstruction(count, dim(ds))
-        for D in 1 : count
             for i in 0 : dim(ds)
-                E = img2src[D]
-                if i == 1 && inCut[E]
-                    set!(dset, i, D, D)
-                else
-                    set!(dset, i, D, src2img[get(ds, i, E)])
+                if i != 1 || !inCut[D]
+                    push!(queue, get(ds, i, D))
                 end
             end
         end
-
-        part = DelaneySymbolUnderConstruction(dset)
-        for D in 1 : count
-            for i in 1 : dim(ds)
-                setV!(part, i - 1, i, D, v(ds, i - 1, i, img2src[D]))
-            end
-        end
-
-        push!(result, DelaneySymbol(part))
     end
 
-    return result
+    dset = DelaneySetUnderConstruction(count, dim(ds))
+    for D in 1 : count
+        for i in 0 : dim(ds)
+            E = img2src[D]
+            if i == 1 && inCut[E]
+                set!(dset, i, D, D)
+            else
+                set!(dset, i, D, src2img[get(ds, i, E)])
+            end
+        end
+    end
+
+    part = DelaneySymbolUnderConstruction(dset)
+    for D in 1 : count
+        for i in 1 : dim(ds)
+            setV!(part, i - 1, i, D, v(ds, i - 1, i, img2src[D]))
+        end
+    end
+
+    return DelaneySymbol(part)
 end
 
 
