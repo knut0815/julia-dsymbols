@@ -105,14 +105,11 @@ function cutsOffDisk(
         end
 
         if (
-            (get(ds, 0, A1) == B1 || get(ds, 2, A1) == B1) &&
+            get(ds, 0, A1) == B1 && get(ds, 2, A1) == B1 &&
             v(ds, 0, 1, A) == 1 && v(ds, 1, 2, A) == 1 &&
             v(ds, 0, 1, B) == 1 && v(ds, 1, 2, B) == 1
         )
-            rest = splitAlong(ds, [A, B], A1)
-            if checkCones(coneDegrees(rest))
-                return false
-            end
+            return false
         end
     end
 
@@ -154,10 +151,7 @@ function cutsOffDisk(
             v(ds, 0, 1, C) == 1 && v(ds, 1, 2, C) == 1 &&
             v(ds, 0, 1, D) == 1 && v(ds, 1, 2, D) == 1
         )
-            rest = splitAlong(ds, [A, B, C, D], A1)
-            if checkCones(coneDegrees(rest))
-                return false
-            end
+            return false
         end
     end
 
