@@ -118,11 +118,7 @@ function cutsOffDisk(
 
     patch = splitAlong(ds, [A, B], A)
 
-    return (
-        isWeaklyOriented(patch) &&
-        eulerCharacteristic(patch) == 1 &&
-        checkCones(coneDegrees(patch))
-    )
+    return eulerCharacteristic(patch) == 1 && checkCones(coneDegrees(patch))
 end
 
 
@@ -167,11 +163,7 @@ function cutsOffDisk(
 
     patch = splitAlong(ds, [A, B, C, D], A)
 
-    return (
-        isWeaklyOriented(patch) &&
-        eulerCharacteristic(patch) == 1 &&
-        checkCones(coneDegrees(patch))
-    )
+    return eulerCharacteristic(patch) == 1 && checkCones(coneDegrees(patch))
 end
 
 
