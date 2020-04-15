@@ -49,6 +49,10 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
                     end
                 end
 
+                if B2 < A1
+                    continue
+                end
+
                 seen3 = copy(seen2)
                 seen3[B2] = seen2[B2] = seen2[get(ds, 1, B2)] = true
 
@@ -89,7 +93,7 @@ function cutsOffDisk(
 )
     checkCones(cones) = cones == [] || cones == [2]
 
-    if get(ds, 0, A) == B && get(ds, 2, A) == B
+    if get(ds, 0, A) == B || get(ds, 2, A) == B
         return false
     end
 
@@ -124,7 +128,10 @@ function cutsOffDisk(
 )
     checkCones(cones) = cones == []
 
-    if get(ds, 0, A) == B && get(ds, 2, B) == C && get(ds, 0, C) == D
+    if (
+        get(ds, 0, A) == B || get(ds, 2, B) == C ||
+        get(ds, 0, C) == D || get(ds, 2, D) == A
+    )
         return false
     end
 
