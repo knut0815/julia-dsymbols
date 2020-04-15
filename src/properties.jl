@@ -113,9 +113,8 @@ function cutsOffDisk(
         end
     end
 
-    patch = splitAlong(ds, [A, B], A)
-
-    return eulerCharacteristic(patch) == 1 && checkCones(coneDegrees(patch))
+    eulerChar, cones = patchProperties(ds, [A, B], A)
+    return eulerChar == 1 && checkCones(cones)
 end
 
 
@@ -155,58 +154,83 @@ function cutsOffDisk(
         end
     end
 
-    patch = splitAlong(ds, [A, B, C, D], A)
-
-    return eulerCharacteristic(patch) == 1 && checkCones(coneDegrees(patch))
+    eulerChar, cones = patchProperties(ds, [A, B, C, D], A)
+    return eulerChar == 1 && checkCones(cones)
 end
 
 
-function splitAlong(ds::AbstractDelaneySymbol, cut::Vector{Int64}, seed::Int64)
+function patchProperties(
+    ds::AbstractDelaneySymbol, cut::Vector{Int64}, seed::Int64
+)
     inCut = falses(size(ds))
     for D in cut
         inCut[D] = inCut[get(ds, 1, D)] = true
     end
 
-    src2img = zeros(Int64, size(ds))
-    img2src = zeros(Int64, size(ds))
-    count = 0
     queue = [seed]
+    inPatch = falses(size(ds))
+    elements = []
+    nrLoops = 0
 
     while length(queue) > 0
         D = popfirst!(queue)
-        if src2img[D] == 0
-            count += 1
-            src2img[D] = count
-            img2src[count] = D
+        if !inPatch[D]
+            inPatch[D] = true
+            push!(elements, D)
 
             for i in 0 : dim(ds)
-                if i != 1 || !inCut[D]
-                    push!(queue, get(ds, i, D))
+                Di = (i == 1 && inCut[D]) ? D : get(ds, i, D)
+                if Di != D
+                    push!(queue, Di)
+                else
+                    nrLoops += 1
                 end
             end
         end
     end
 
-    dset = DelaneySetUnderConstruction(count, dim(ds))
-    for D in 1 : count
-        for i in 0 : dim(ds)
-            E = img2src[D]
-            if i == 1 && inCut[E]
-                set!(dset, i, D, D)
-            else
-                set!(dset, i, D, src2img[get(ds, i, E)])
+    cones = []
+    nv = 0
+
+    for i in 0 : dim(ds) - 1
+        for j in i + 1 : dim(ds)
+            seen = falses(size(ds))
+            for D in elements
+                if !seen[D]
+                    seen[D] = true
+                    nv += 1
+                    isChain = false
+
+                    E = D
+                    k = i
+
+                    while true
+                        Ek = (k == 1 && inCut[E]) ? E : get(ds, k, E)
+                        if Ek == E
+                            isChain = true
+                        end
+
+                        E = Ek
+                        k = i + j - k
+                        seen[E] = true
+
+                        if E == D && k == i
+                            break
+                        end
+                    end
+
+                    if !isChain
+                        push!(cones, v(ds, i, j, D))
+                    end
+                end
             end
         end
     end
 
-    part = DelaneySymbolUnderConstruction(dset)
-    for D in 1 : count
-        for i in 1 : dim(ds)
-            setV!(part, i - 1, i, D, v(ds, i - 1, i, img2src[D]))
-        end
-    end
+    nf = length(elements)
+    ne = div(3 * nf + nrLoops, 2)
 
-    return DelaneySymbol(part)
+    return nf - ne + nv, filter(v -> v > 1, cones)
 end
 
 
@@ -219,22 +243,4 @@ function eulerCharacteristic(ds::AbstractDelaneySet)
     nv = nrOrbits(0, 1) + nrOrbits(0, 2) + nrOrbits(1, 2)
 
     return nf - ne + nv
-end
-
-
-function coneDegrees(ds::AbstractDelaneySymbol)
-    result = []
-
-    for i in 0 : dim(ds) - 1
-        for j in i + 1 : dim(ds)
-            for orb in orbits(ds, i, j)
-                vOrb = v(ds, i, j, first(orb.elements))
-                if vOrb > 1 && !orb.isChain
-                    push!(result, vOrb)
-                end
-            end
-        end
-    end
-
-    return result
 end
