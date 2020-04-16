@@ -37,6 +37,11 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
                 break
             end
 
+            if A2 == get(ds, 0, A1) || A2 == get(ds, 2, A1)
+                seen1[A2] = seen1[get(ds, 1, A2)] = true
+                continue
+            end
+
             seen2 = copy(seen1)
             seen2[A2] = seen1[A2] = seen1[get(ds, 1, A2)] = true
 
@@ -53,6 +58,11 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
                     continue
                 end
 
+                if B2 == get(ds, 2, A2)
+                    seen2[B2] = seen2[get(ds, 1, B2)] = true
+                    continue
+                end
+
                 seen3 = copy(seen2)
                 seen3[B2] = seen2[B2] = seen2[get(ds, 1, B2)] = true
 
@@ -62,6 +72,10 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
                     end
 
                     seen3[B1] = seen3[get(ds, 1, B1)] = true
+
+                    if B1 == get(ds, 0, B2) || B1 == get(ds, 2, A1)
+                        continue
+                    end
 
                     for T in DoubleStep(ds, 2, 1, get(ds, 2, B1))
                         if seen3[T]
