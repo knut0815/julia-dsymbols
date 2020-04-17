@@ -104,10 +104,6 @@ function cutsOffDisk(
 )
     checkCones(cones) = cones == [] || cones == [2]
 
-    if get(ds, 0, A) == B || get(ds, 2, A) == B
-        return false
-    end
-
     if !hasHandles
         A1 = get(ds, 1, A)
         B1 = get(ds, 1, B)
@@ -138,13 +134,6 @@ function cutsOffDisk(
     A::Int64, B::Int64, C::Int64, D::Int64
 )
     checkCones(cones) = cones == []
-
-    if (
-        get(ds, 0, A) == B || get(ds, 2, B) == C ||
-        get(ds, 0, C) == D || get(ds, 2, D) == A
-    )
-        return false
-    end
 
     if !hasHandles
         A1 = get(ds, 1, A)
