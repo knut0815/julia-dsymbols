@@ -117,8 +117,7 @@ function cutsOffDisk(
 
         if (
             get(ds, 0, A1) == B1 && get(ds, 2, A1) == B1 &&
-            v(ds, 0, 1, A) == 1 && v(ds, 1, 2, A) == 1 &&
-            v(ds, 0, 1, B) == 1 && v(ds, 1, 2, B) == 1
+            v(ds, 0, 1, A) == 1 && v(ds, 1, 2, A) == 1
         )
             return false
         end
@@ -152,10 +151,8 @@ function cutsOffDisk(
             get(ds, 0, A1) == B1 &&
             get(ds, 2, B1) == C1 &&
             get(ds, 0, C1) == D1 &&
-            v(ds, 0, 1, A) == 1 && v(ds, 1, 2, A) == 1 &&
-            v(ds, 0, 1, B) == 1 && v(ds, 1, 2, B) == 1 &&
-            v(ds, 0, 1, C) == 1 && v(ds, 1, 2, C) == 1 &&
-            v(ds, 0, 1, D) == 1 && v(ds, 1, 2, D) == 1
+            v(ds, 0, 1, A) == 1 && v(ds, 1, 2, B) == 1 &&
+            v(ds, 0, 1, C) == 1 && v(ds, 1, 2, D) == 1
         )
             return false
         end
