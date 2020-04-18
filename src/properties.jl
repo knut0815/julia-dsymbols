@@ -35,9 +35,7 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
         for A2 in DoubleStep(ds, 0, 1, get(ds, 0, A1))
             if seen1[A2]
                 break
-            end
-
-            if A2 == get(ds, 0, A1) || A2 == get(ds, 2, A1)
+            elseif A2 == get(ds, 0, A1) || A2 == get(ds, 2, A1)
                 seen1[A2] = seen1[get(ds, 1, A2)] = true
                 continue
             end
@@ -49,16 +47,11 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
                 if seen2[B2]
                     if B2 == A1 && cutsOffDisk(ds, hasHandles, A1, A2)
                         return false
-                    else
-                        break
                     end
-                end
-
-                if B2 < A1
+                    break
+                elseif B2 < A1
                     continue
-                end
-
-                if B2 == get(ds, 2, A2)
+                elseif B2 == get(ds, 2, A2)
                     seen2[B2] = seen2[get(ds, 1, B2)] = true
                     continue
                 end
@@ -84,9 +77,8 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
                                 cutsOffDisk(ds, hasHandles, A1, A2, B2, B1)
                             )
                                 return false
-                            else
-                                break
                             end
+                            break
                         end
                     end
                 end
