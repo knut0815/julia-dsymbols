@@ -163,24 +163,23 @@ function patchProperties(
         inCut[D] = inCut[get(ds, 1, D)] = true
     end
 
-    queue = [seed]
     inPatch = falses(size(ds))
-    elements = []
+    inPatch[seed] = true
+    elements = [seed]
+    next = 1
     nrLoops = 0
 
-    while length(queue) > 0
-        D = popfirst!(queue)
-        if !inPatch[D]
-            inPatch[D] = true
-            push!(elements, D)
+    while next <= length(elements)
+        D = elements[next]
+        next += 1
 
-            for i in 0 : dim(ds)
-                Di = (i == 1 && inCut[D]) ? D : get(ds, i, D)
-                if Di != D
-                    push!(queue, Di)
-                else
-                    nrLoops += 1
-                end
+        for i in 0 : dim(ds)
+            Di = (i == 1 && inCut[D]) ? D : get(ds, i, D)
+            if Di == D
+                nrLoops += 1
+            elseif !inPatch[Di]
+                inPatch[Di] = true
+                push!(elements, Di)
             end
         end
     end
