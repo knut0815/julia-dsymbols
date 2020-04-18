@@ -185,15 +185,14 @@ function patchProperties(
     end
 
     cones = []
-    nv = 0
+    eulerChar = -div(length(elements) + nrLoops, 2)
 
     for i in 0 : dim(ds) - 1
         for j in i + 1 : dim(ds)
             seen = falses(size(ds))
             for D in elements
                 if !seen[D]
-                    seen[D] = true
-                    nv += 1
+                    eulerChar += 1
                     isChain = false
 
                     E = D
@@ -222,10 +221,7 @@ function patchProperties(
         end
     end
 
-    nf = length(elements)
-    ne = div(3 * nf + nrLoops, 2)
-
-    return nf - ne + nv, filter(v -> v > 1, cones)
+    return eulerChar, filter(v -> v > 1, cones)
 end
 
 

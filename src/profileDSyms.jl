@@ -34,5 +34,5 @@ println("Profile run...")
 @profile gen(12)
 
 println("Profiling result:")
-Profile.print(format=:tree, combine=true, mincount=300)
+Profile.print(format=:tree, combine=true, mincount=200)
 #Profile.print(format=:flat, combine=true, sortedby=:count)
