@@ -185,6 +185,10 @@ function checkPatch(
         end
     end
 
+    if inPatch[get(ds, 1, seed)] && !(get(ds, 1, seed) in cut)
+        return false
+    end
+
     cones = []
     eulerChar = -div(length(elements) + nrLoops, 2)
 
