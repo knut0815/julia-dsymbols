@@ -94,7 +94,7 @@ function cutsOffDisk(
     ds::AbstractDelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64
 )
-    checkCones(cones) = cones == [] || cones == [2]
+    goodCones::Vector{Vector{Int64}} = [[], [2]]
 
     if !hasHandles
         A1 = get(ds, 1, A)
@@ -102,7 +102,7 @@ function cutsOffDisk(
 
         if A1 == B
             vs = [v(ds, 0, 1, A), v(ds, 1, 2, A)]
-            if checkCones(filter(v -> v > 1, vs))
+            if filter(v -> v > 1, vs) in goodCones
                 return false
             end
         end
@@ -115,8 +115,7 @@ function cutsOffDisk(
         end
     end
 
-    eulerChar, cones = patchProperties(ds, [A, B], A)
-    return eulerChar == 1 && checkCones(cones)
+    return checkPatch(ds, [A, B], goodCones)
 end
 
 
@@ -124,7 +123,7 @@ function cutsOffDisk(
     ds::AbstractDelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64, C::Int64, D::Int64
 )
-    checkCones(cones) = cones == []
+    goodCones::Vector{Vector{Int64}} = [[]]
 
     if !hasHandles
         A1 = get(ds, 1, A)
@@ -134,7 +133,7 @@ function cutsOffDisk(
 
         if (A1 == B && C1 == D) || (A1 == D && B1 == C)
             vs = [v(ds, 0, 1, A), v(ds, 1, 2, A), v(ds, 1, 2, B)]
-            if checkCones(filter(v -> v > 1, vs))
+            if filter(v -> v > 1, vs) in goodCones
                 return false
             end
         end
@@ -150,14 +149,16 @@ function cutsOffDisk(
         end
     end
 
-    eulerChar, cones = patchProperties(ds, [A, B, C, D], A)
-    return eulerChar == 1 && checkCones(cones)
+    return checkPatch(ds, [A, B, C, D], goodCones)
 end
 
 
-function patchProperties(
-    ds::AbstractDelaneySymbol, cut::Vector{Int64}, seed::Int64
+function checkPatch(
+    ds::AbstractDelaneySymbol, cut::Vector{Int64},
+    goodCones::Vector{Vector{Int64}}
 )
+    seed = cut[1]
+
     inCut = falses(size(ds))
     for D in cut
         inCut[D] = inCut[get(ds, 1, D)] = true
@@ -221,7 +222,7 @@ function patchProperties(
         end
     end
 
-    return eulerChar, filter(v -> v > 1, cones)
+    return eulerChar == 1 && filter(v -> v > 1, cones) in goodCones
 end
 
 
