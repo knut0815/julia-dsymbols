@@ -160,8 +160,13 @@ function checkPatch(
     seed = cut[1]
 
     inCut = falses(size(ds))
+    outside = falses(size(ds))
     for D in cut
-        inCut[D] = inCut[get(ds, 1, D)] = true
+        D1 = get(ds, 1, D)
+        inCut[D] = inCut[D1] = true
+        if !(D1 in cut)
+            outside[D1] = true
+        end
     end
 
     inPatch = falses(size(ds))
@@ -178,15 +183,13 @@ function checkPatch(
             Di = (i == 1 && inCut[D]) ? D : get(ds, i, D)
             if Di == D
                 nrLoops += 1
+            elseif outside[Di]
+                return false
             elseif !inPatch[Di]
                 inPatch[Di] = true
                 push!(elements, Di)
             end
         end
-    end
-
-    if inPatch[get(ds, 1, seed)] && !(get(ds, 1, seed) in cut)
-        return false
     end
 
     cones = []
@@ -205,14 +208,13 @@ function checkPatch(
 
                     while true
                         Ek = (k == 1 && inCut[E]) ? E : get(ds, k, E)
+                        seen[Ek] = true
                         if Ek == E
                             isChain = true
                         end
 
                         E = Ek
                         k = i + j - k
-                        seen[E] = true
-
                         if E == D && k == i
                             break
                         end
