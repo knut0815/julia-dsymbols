@@ -16,14 +16,14 @@ end
 
 
 println("Warmup run...")
-gen(8)
+gen(10)
 
 Profile.init(n = 10000000)
 Profile.clear()
 
 println("Profile run...")
-@profile gen(12)
+@profile gen(14)
 
 println("Profiling result:")
-Profile.print(format=:tree, combine=true, mincount=200)
+Profile.print(format=:tree, combine=true, mincount=1000)
 #Profile.print(format=:flat, combine=true, sortedby=:count)
