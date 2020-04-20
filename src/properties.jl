@@ -26,10 +26,9 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
             B2 = get(ds, 1, A2)
             while true
                 B2 = get(ds, 2, get(ds, 1, B2))
-                if seen2[B2]
-                    if B2 == A1 && cutsOffDisk(ds, hasHandles, A1, A2)
-                        return false
-                    end
+                if B2 == A1 && boundsDisk(ds, hasHandles, A1, A2)
+                    return false
+                elseif seen2[B2]
                     break
                 elseif B2 < A1 || B2 == get(ds, 2, A2)
                     seen2[B2] = seen2[get(ds, 1, B2)] = true
@@ -55,13 +54,9 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
                     T = get(ds, 1, B1)
                     while true
                         T = get(ds, 2, get(ds, 1, T))
-                        if seen3[T]
-                            if (
-                                T == A1 &&
-                                cutsOffDisk(ds, hasHandles, A1, A2, B2, B1)
-                            )
-                                return false
-                            end
+                        if T == A1 && boundsDisk(ds, hasHandles, A1, A2, B2, B1)
+                            return false
+                        elseif seen3[T]
                             break
                         end
                     end
@@ -74,7 +69,7 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
 end
 
 
-function cutsOffDisk(
+function boundsDisk(
     ds::AbstractDelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64
 )
@@ -103,7 +98,7 @@ function cutsOffDisk(
 end
 
 
-function cutsOffDisk(
+function boundsDisk(
     ds::AbstractDelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64, C::Int64, D::Int64
 )
