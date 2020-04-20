@@ -7,65 +7,76 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
     hasHandles = eulerCharacteristic(ds) <= 0
 
     for A1 in filter(D -> ori[D] > 0, 1 : size(ds))
-        seen1 = falses(size(ds))
-        seen1[A1] = true
+        if disprovePseudoConvexity(ds, hasHandles, A1)
+            return false
+        end
+    end
 
-        A2 = get(ds, 1, A1)
+    return true
+end
+
+
+function disprovePseudoConvexity(
+    ds::AbstractDelaneySymbol, hasHandles::Bool, A1::Int64
+)
+    seen1 = falses(size(ds))
+    seen1[A1] = true
+
+    A2 = get(ds, 1, A1)
+    while true
+        A2 = get(ds, 0, get(ds, 1, A2))
+        if seen1[A2]
+            break
+        elseif A2 == get(ds, 0, A1) || A2 == get(ds, 2, A1)
+            seen1[A2] = seen1[get(ds, 1, A2)] = true
+            continue
+        end
+
+        seen2 = copy(seen1)
+        seen2[A2] = seen1[A2] = seen1[get(ds, 1, A2)] = true
+
+        B2 = get(ds, 1, A2)
         while true
-            A2 = get(ds, 0, get(ds, 1, A2))
-            if seen1[A2]
+            B2 = get(ds, 2, get(ds, 1, B2))
+            if B2 == A1 && boundsDisk(ds, hasHandles, A1, A2)
+                return true
+            elseif seen2[B2]
                 break
-            elseif A2 == get(ds, 0, A1) || A2 == get(ds, 2, A1)
-                seen1[A2] = seen1[get(ds, 1, A2)] = true
+            elseif B2 < A1 || B2 == get(ds, 2, A2)
+                seen2[B2] = seen2[get(ds, 1, B2)] = true
                 continue
             end
 
-            seen2 = copy(seen1)
-            seen2[A2] = seen1[A2] = seen1[get(ds, 1, A2)] = true
+            seen3 = copy(seen2)
+            seen3[B2] = seen2[B2] = seen2[get(ds, 1, B2)] = true
 
-            B2 = get(ds, 1, A2)
+            B1 = get(ds, 1, B2)
             while true
-                B2 = get(ds, 2, get(ds, 1, B2))
-                if B2 == A1 && boundsDisk(ds, hasHandles, A1, A2)
-                    return false
-                elseif seen2[B2]
+                B1 = get(ds, 0, get(ds, 1, B1))
+                if seen3[B1]
                     break
-                elseif B2 < A1 || B2 == get(ds, 2, A2)
-                    seen2[B2] = seen2[get(ds, 1, B2)] = true
+                end
+
+                seen3[B1] = seen3[get(ds, 1, B1)] = true
+
+                if B1 == get(ds, 0, B2) || B1 == get(ds, 2, A1)
                     continue
                 end
 
-                seen3 = copy(seen2)
-                seen3[B2] = seen2[B2] = seen2[get(ds, 1, B2)] = true
-
-                B1 = get(ds, 1, B2)
+                T = get(ds, 1, B1)
                 while true
-                    B1 = get(ds, 0, get(ds, 1, B1))
-                    if seen3[B1]
+                    T = get(ds, 2, get(ds, 1, T))
+                    if T == A1 && boundsDisk(ds, hasHandles, A1, A2, B2, B1)
+                        return true
+                    elseif seen3[T]
                         break
-                    end
-
-                    seen3[B1] = seen3[get(ds, 1, B1)] = true
-
-                    if B1 == get(ds, 0, B2) || B1 == get(ds, 2, A1)
-                        continue
-                    end
-
-                    T = get(ds, 1, B1)
-                    while true
-                        T = get(ds, 2, get(ds, 1, T))
-                        if T == A1 && boundsDisk(ds, hasHandles, A1, A2, B2, B1)
-                            return false
-                        elseif seen3[T]
-                            break
-                        end
                     end
                 end
             end
         end
     end
 
-    return true
+    return false
 end
 
 
