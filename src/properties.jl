@@ -23,14 +23,14 @@ function findDiskBoundingTwoCut(
     ds::AbstractDelaneySymbol, hasHandles::Bool, A::Int64
 )
     seen = falses(size(ds))
-    seen[A] = true
+    seen[A] = seen[get(ds, 2, A)] = true
 
     B = get(ds, 1, A)
     while true
         B = get(ds, 0, get(ds, 1, B))
         if seen[B]
             break
-        elseif B == get(ds, 0, A) || B == get(ds, 2, A)
+        elseif B == get(ds, 0, A)
             seen[B] = seen[get(ds, 1, B)] = true
             continue
         end
@@ -40,8 +40,8 @@ function findDiskBoundingTwoCut(
         T = get(ds, 1, B)
         while true
             T = get(ds, 2, get(ds, 1, T))
-            if T == A && boundsDisk(ds, hasHandles, A, B)
-                return true
+            if T == A
+                return boundsDisk(ds, hasHandles, A, B)
             elseif seen[T]
                 break
             end
@@ -56,14 +56,14 @@ function findDiskBoundingFourCut(
     ds::AbstractDelaneySymbol, hasHandles::Bool, A1::Int64
 )
     seen1 = falses(size(ds))
-    seen1[A1] = true
+    seen1[A1] = seen1[get(ds, 2, A1)] = true
 
     A2 = get(ds, 1, A1)
     while true
         A2 = get(ds, 0, get(ds, 1, A2))
         if seen1[A2]
             break
-        elseif A2 == get(ds, 0, A1) || A2 == get(ds, 2, A1)
+        elseif A2 == get(ds, 0, A1)
             seen1[A2] = seen1[get(ds, 1, A2)] = true
             continue
         end
@@ -93,7 +93,7 @@ function findDiskBoundingFourCut(
 
                 seen3[B1] = seen3[get(ds, 1, B1)] = true
 
-                if B1 == get(ds, 0, B2) || B1 == get(ds, 2, A1)
+                if B1 == get(ds, 0, B2)
                     continue
                 end
 
