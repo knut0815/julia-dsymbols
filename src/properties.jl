@@ -7,7 +7,10 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
     hasHandles = eulerCharacteristic(ds) <= 0
 
     for A1 in filter(D -> ori[D] > 0, 1 : size(ds))
-        if disprovePseudoConvexity(ds, hasHandles, A1)
+        if findDiskBoundingTwoCut(ds, hasHandles, A1)
+            return false
+        end
+        if findDiskBoundingFourCut(ds, hasHandles, A1)
             return false
         end
     end
@@ -16,7 +19,40 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
 end
 
 
-function disprovePseudoConvexity(
+function findDiskBoundingTwoCut(
+    ds::AbstractDelaneySymbol, hasHandles::Bool, A::Int64
+)
+    seen = falses(size(ds))
+    seen[A] = true
+
+    B = get(ds, 1, A)
+    while true
+        B = get(ds, 0, get(ds, 1, B))
+        if seen[B]
+            break
+        elseif B == get(ds, 0, A) || B == get(ds, 2, A)
+            seen[B] = seen[get(ds, 1, B)] = true
+            continue
+        end
+
+        seen[B] = seen[get(ds, 1, B)] = true
+
+        T = get(ds, 1, B)
+        while true
+            T = get(ds, 2, get(ds, 1, T))
+            if T == A && boundsDisk(ds, hasHandles, A, B)
+                return true
+            elseif seen[T]
+                break
+            end
+        end
+    end
+
+    return false
+end
+
+
+function findDiskBoundingFourCut(
     ds::AbstractDelaneySymbol, hasHandles::Bool, A1::Int64
 )
     seen1 = falses(size(ds))
@@ -38,9 +74,7 @@ function disprovePseudoConvexity(
         B2 = get(ds, 1, A2)
         while true
             B2 = get(ds, 2, get(ds, 1, B2))
-            if B2 == A1 && boundsDisk(ds, hasHandles, A1, A2)
-                return true
-            elseif seen2[B2]
+            if seen2[B2]
                 break
             elseif B2 < A1 || B2 == get(ds, 2, A2)
                 seen2[B2] = seen2[get(ds, 1, B2)] = true
