@@ -20,7 +20,7 @@ end
 
 
 function findDiskBoundingTwoCut(
-    ds::AbstractDelaneySymbol, hasHandles::Bool, A::Int64
+    ds::DelaneySymbol, hasHandles::Bool, A::Int64
 )
     seen = falses(size(ds))
     seen[A] = seen[get(ds, 2, A)] = true
@@ -53,7 +53,7 @@ end
 
 
 function findDiskBoundingFourCut(
-    ds::AbstractDelaneySymbol, hasHandles::Bool, A1::Int64
+    ds::DelaneySymbol, hasHandles::Bool, A1::Int64
 )
     seen1 = falses(size(ds))
     seen1[A1] = seen1[get(ds, 2, A1)] = true
@@ -115,7 +115,7 @@ end
 
 
 function boundsDisk(
-    ds::AbstractDelaneySymbol, hasHandles::Bool,
+    ds::DelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64
 )
     goodCones::Vector{Vector{Int64}} = [[], [2]]
@@ -144,7 +144,7 @@ end
 
 
 function boundsDisk(
-    ds::AbstractDelaneySymbol, hasHandles::Bool,
+    ds::DelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64, C::Int64, D::Int64
 )
     goodCones::Vector{Vector{Int64}} = [[]]
@@ -178,7 +178,7 @@ end
 
 
 function checkPatch(
-    ds::AbstractDelaneySymbol, cut::Vector{Int64},
+    ds::DelaneySymbol, cut::Vector{Int64},
     goodCones::Vector{Vector{Int64}}
 )
     seed = cut[1]
