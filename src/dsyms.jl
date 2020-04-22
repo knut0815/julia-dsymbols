@@ -31,17 +31,17 @@ end
 
 
 struct DelaneySymbol <: AbstractDelaneySymbol
-    dset::AbstractDelaneySet
+    dset::DelaneySet
     orbits::Vector{Orbit}
     orbitIndex::Array{Int64, 2}
     vs::Vector{Int64}
 
-    function DelaneySymbol(dset::AbstractDelaneySet)
+    function DelaneySymbol(dset::DelaneySet)
         (allOrbits, orbitIndex) = collectOrbits(dset)
         new(dset, allOrbits, orbitIndex, zeros(Int64, length(allOrbits)))
     end
 
-    function DelaneySymbol(dset::AbstractDelaneySet, vs::Vector{Int64})
+    function DelaneySymbol(dset::DelaneySet, vs::Vector{Int64})
         (allOrbits, orbitIndex) = collectOrbits(dset)
         new(dset, allOrbits, orbitIndex, copy(vs))
     end
@@ -94,10 +94,10 @@ struct DelaneySymbolUnderConstruction <: AbstractDelaneySymbol
     end
 end
 
-DelaneySymbolUnderConstruction(dset::AbstractDelaneySet) =
+DelaneySymbolUnderConstruction(dset::DelaneySet) =
     DelaneySymbolUnderConstruction(DelaneySymbol(dset))
 
-DelaneySymbolUnderConstruction(dset::AbstractDelaneySet, vs::Vector{Int64}) =
+DelaneySymbolUnderConstruction(dset::DelaneySet, vs::Vector{Int64}) =
     DelaneySymbolUnderConstruction(DelaneySymbol(dset, vs))
 
 DelaneySymbol(ds::DelaneySymbolUnderConstruction) = ds.ds
