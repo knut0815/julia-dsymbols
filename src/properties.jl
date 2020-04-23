@@ -1,8 +1,38 @@
 include("dsyms.jl")
 
 
+struct ExplicitDelaneySymbol <: AbstractDelaneySymbol
+    op::Array{Int64, 2}
+    v::Array{Int64, 2}
+end
+
+
+Base.size(ds::ExplicitDelaneySymbol) = first(size(ds.op))
+
+dim(ds::ExplicitDelaneySymbol) = last(size(ds.op)) - 1
+
+get(ds::ExplicitDelaneySymbol, i::Int64, D::Int64) =
+    1 <= D <= size(ds) ? ds.op[D, i + 1] : 0
+
+
+function v(ds::ExplicitDelaneySymbol, i::Int64, j::Int64, D::Int64)
+    if !(1 <= D <= size(ds))
+        return 0
+    elseif j == i + 1
+        return ds.v[D, j]
+    elseif i == j + 1
+        return ds.v[D, i]
+    elseif j != i && get(ds, i, D) == get(ds, j, D)
+        return 2
+    else
+        return 1
+    end
+end
+
+
+
 function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
-    ds = orientedCover(dsRaw)
+    ds = makeOriented(dsRaw)
     ori = partialOrientation(ds)
     hasHandles = eulerCharacteristic(ds) <= 0
 
@@ -19,8 +49,46 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
 end
 
 
+function makeOriented(ds::AbstractDelaneySymbol)
+    s = size(ds)
+    d = dim(ds)
+
+    if isOriented(ds)
+        op = zeros(Int64, s, d + 1)
+        vs = zeros(Int64, s, d)
+
+        for D in 1 : s
+            for i in 0 : d
+                op[D, i + 1] = get(ds, i, D)
+            end
+            for i in 1 : d
+                vs[D, i] = v(ds, i - 1, i, D)
+            end
+        end
+
+        return ExplicitDelaneySymbol(op, vs)
+    else
+        op = zeros(Int64, 2 * s, d + 1)
+        vs = zeros(Int64, 2 * s, d)
+
+        for D in 1 : s
+            for i in 0 : d
+                Di = get(ds, i, D)
+                op[D, i + 1] = Di + s
+                op[D + s, i + 1] = Di
+            end
+            for i in 1 : d
+                vs[D, i] = vs[D + s, i] = v(ds, i - 1, i, D)
+            end
+        end
+
+        return ExplicitDelaneySymbol(op, vs)
+    end
+end
+
+
 function findDiskBoundingTwoCut(
-    ds::DelaneySymbol, hasHandles::Bool, A::Int64
+    ds::AbstractDelaneySymbol, hasHandles::Bool, A::Int64
 )
     seen = falses(size(ds))
     seen[A] = seen[get(ds, 2, A)] = true
@@ -53,7 +121,7 @@ end
 
 
 function findDiskBoundingFourCut(
-    ds::DelaneySymbol, hasHandles::Bool, A1::Int64
+    ds::AbstractDelaneySymbol, hasHandles::Bool, A1::Int64
 )
     seen1 = falses(size(ds))
     seen1[A1] = seen1[get(ds, 2, A1)] = true
@@ -115,7 +183,7 @@ end
 
 
 function boundsDisk(
-    ds::DelaneySymbol, hasHandles::Bool,
+    ds::AbstractDelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64
 )
     goodCones::Vector{Vector{Int64}} = [[], [2]]
@@ -144,7 +212,7 @@ end
 
 
 function boundsDisk(
-    ds::DelaneySymbol, hasHandles::Bool,
+    ds::AbstractDelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64, C::Int64, D::Int64
 )
     goodCones::Vector{Vector{Int64}} = [[]]
@@ -178,7 +246,7 @@ end
 
 
 function checkPatch(
-    ds::DelaneySymbol, cut::Vector{Int64},
+    ds::AbstractDelaneySymbol, cut::Vector{Int64},
     goodCones::Vector{Vector{Int64}}
 )
     seed = cut[1]
