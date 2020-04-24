@@ -186,15 +186,15 @@ function boundsDisk(
     ds::AbstractDelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64
 )
-    goodCones::Vector{Vector{Int64}} = [[], [2]]
-
     if !hasHandles
         A1 = get(ds, 1, A)
         B1 = get(ds, 1, B)
 
         if A1 == B
-            vs = [v(ds, 0, 1, A), v(ds, 1, 2, A)]
-            if filter(v -> v > 1, vs) in goodCones
+            v01 = v(ds, 0, 1, A)
+            v12 = v(ds, 1, 2, A)
+
+            if (v01 == 1 && v12 <= 2) || (v01 <= 2 && v12 == 1)
                 return false
             end
         end
@@ -207,7 +207,7 @@ function boundsDisk(
         end
     end
 
-    return checkPatch(ds, [A, B], goodCones)
+    return checkPatch(ds, [A, B], true)
 end
 
 
@@ -215,19 +215,19 @@ function boundsDisk(
     ds::AbstractDelaneySymbol, hasHandles::Bool,
     A::Int64, B::Int64, C::Int64, D::Int64
 )
-    goodCones::Vector{Vector{Int64}} = [[]]
-
     if !hasHandles
         A1 = get(ds, 1, A)
         B1 = get(ds, 1, B)
         C1 = get(ds, 1, C)
         D1 = get(ds, 1, D)
 
-        if (A1 == B && C1 == D) || (A1 == D && B1 == C)
-            vs = [v(ds, 0, 1, A), v(ds, 1, 2, A), v(ds, 1, 2, B)]
-            if filter(v -> v > 1, vs) in goodCones
-                return false
-            end
+        if (
+            ((A1 == B && C1 == D) || (A1 == D && B1 == C)) &&
+            v(ds, 0, 1, A) == 1 &&
+            v(ds, 1, 2, A) == 1 &&
+            v(ds, 1, 2, B) == 1
+        )
+            return false
         end
 
         if (
@@ -241,13 +241,12 @@ function boundsDisk(
         end
     end
 
-    return checkPatch(ds, [A, B, C, D], goodCones)
+    return checkPatch(ds, [A, B, C, D], false)
 end
 
 
 function checkPatch(
-    ds::AbstractDelaneySymbol, cut::Vector{Int64},
-    goodCones::Vector{Vector{Int64}}
+    ds::AbstractDelaneySymbol, cut::Vector{Int64}, allow2Cone::Bool
 )
     seed = cut[1]
 
@@ -284,7 +283,7 @@ function checkPatch(
         end
     end
 
-    cones = []
+    seen2Cone = false
     eulerChar = -div(length(elements) + nrLoops, 2)
 
     for i in 0 : dim(ds) - 1
@@ -313,14 +312,23 @@ function checkPatch(
                     end
 
                     if !isChain
-                        push!(cones, v(ds, i, j, D))
+                        vD = v(ds, i, j, D)
+                        if vD > 2
+                            return false
+                        elseif vD == 2
+                            if !allow2Cone || seen2Cone
+                                return false
+                            else
+                                seen2Cone = true
+                            end
+                        end
                     end
                 end
             end
         end
     end
 
-    return eulerChar == 1 && filter(v -> v > 1, cones) in goodCones
+    return eulerChar == 1
 end
 
 
