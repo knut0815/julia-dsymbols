@@ -22,7 +22,7 @@ end
 
 for (count1, dset) in enumerate(DSetGenerator(2, maxSize))
     for (count2, ds) in enumerate(DSymGenerator(dset))
-        if !filterPseudoConvex || isPseudoConvex(ds)
+        if !filterPseudoConvex || !isPseudoConvex(ds)
             println(NumberedDelaneySymbol(ds, count1, count2))
         end
     end
