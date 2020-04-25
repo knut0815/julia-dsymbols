@@ -90,7 +90,7 @@ end
 
 function countOrbits(ds::AbstractDelaneySymbol, i::Int64, j::Int64)
     n = 0
-    seen = falses(size(ds))
+    seen = fill(false, size(ds))
 
     for D in 1 : size(ds)
         if !seen[D]
@@ -110,7 +110,7 @@ end
 function findDiskBoundingTwoCut(
     ds::AbstractDelaneySymbol, hasHandles::Bool, A::Int64
 )
-    seen = falses(size(ds))
+    seen = fill(false, size(ds))
     seen[A] = seen[get(ds, 2, A)] = true
 
     B = get(ds, 1, A)
@@ -143,7 +143,7 @@ end
 function findDiskBoundingFourCut(
     ds::AbstractDelaneySymbol, hasHandles::Bool, A1::Int64
 )
-    seen1 = falses(size(ds))
+    seen1 = fill(false, size(ds))
     seen1[A1] = seen1[get(ds, 2, A1)] = true
 
     A2 = get(ds, 1, A1)
@@ -270,8 +270,8 @@ function checkPatch(
 )
     seed = cut[1]
 
-    inCut = falses(size(ds))
-    outside = falses(size(ds))
+    inCut = fill(false, size(ds))
+    outside = fill(false, size(ds))
     for D in cut
         D1 = get(ds, 1, D)
         inCut[D] = inCut[D1] = true
@@ -280,7 +280,7 @@ function checkPatch(
         end
     end
 
-    inPatch = falses(size(ds))
+    inPatch = fill(false, size(ds))
     inPatch[seed] = true
     elements = [seed]
     next = 1
@@ -308,7 +308,7 @@ function checkPatch(
 
     for i in 0 : dim(ds) - 1
         for j in i + 1 : dim(ds)
-            seen = falses(size(ds))
+            seen = fill(false, size(ds))
             for D in elements
                 if !seen[D]
                     eulerChar += 1
