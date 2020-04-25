@@ -35,12 +35,14 @@ function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
     nv = countOrbits(ds, 0, 1) + countOrbits(ds, 0, 2) + countOrbits(ds, 1, 2)
     hasHandles = 2 * nv <= size(ds)
 
-    for A1 in filter(D -> ori[D] > 0, 1 : size(ds))
-        if findDiskBoundingTwoCut(ds, hasHandles, A1)
-            return false
-        end
-        if findDiskBoundingFourCut(ds, hasHandles, A1)
-            return false
+    for D in 1 : size(ds)
+        if ori[D] > 0
+            if findDiskBoundingTwoCut(ds, hasHandles, D)
+                return false
+            end
+            if findDiskBoundingFourCut(ds, hasHandles, D)
+                return false
+            end
         end
     end
 
