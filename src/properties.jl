@@ -11,14 +11,11 @@ Base.size(ds::ExplicitDelaneySymbol) = first(size(ds.op))
 
 dim(ds::ExplicitDelaneySymbol) = last(size(ds.op)) - 1
 
-get(ds::ExplicitDelaneySymbol, i::Int64, D::Int64) =
-    1 <= D <= size(ds) ? ds.op[D, i + 1] : 0
+get(ds::ExplicitDelaneySymbol, i::Int64, D::Int64) = ds.op[D, i + 1]
 
 
 function v(ds::ExplicitDelaneySymbol, i::Int64, j::Int64, D::Int64)
-    if !(1 <= D <= size(ds))
-        return 0
-    elseif j == i + 1
+    if j == i + 1
         return ds.v[D, j]
     elseif i == j + 1
         return ds.v[D, i]
