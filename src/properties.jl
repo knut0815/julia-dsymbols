@@ -31,7 +31,9 @@ end
 function isPseudoConvex(dsRaw::AbstractDelaneySymbol)
     ds = makeOriented(dsRaw)
     ori = partialOrientation(ds)
-    hasHandles = eulerCharacteristic(ds) <= 0
+
+    nv = countOrbits(ds, 0, 1) + countOrbits(ds, 0, 2) + countOrbits(ds, 1, 2)
+    hasHandles = 2 * nv <= size(ds)
 
     for A1 in filter(D -> ori[D] > 0, 1 : size(ds))
         if findDiskBoundingTwoCut(ds, hasHandles, A1)
@@ -81,6 +83,25 @@ function makeOriented(ds::AbstractDelaneySymbol)
 
         return ExplicitDelaneySymbol(op, vs)
     end
+end
+
+
+function countOrbits(ds::AbstractDelaneySymbol, i::Int64, j::Int64)
+    n = 0
+    seen = falses(size(ds))
+
+    for D in 1 : size(ds)
+        if !seen[D]
+            n += 1
+            E = D
+            while !seen[E]
+                seen[E] = seen[get(ds, i, E)] = true
+                E = get(ds, j, get(ds, i, E))
+            end
+        end
+    end
+
+    return n
 end
 
 
@@ -326,16 +347,4 @@ function checkPatch(
     end
 
     return eulerChar == 1
-end
-
-
-function eulerCharacteristic(ds::AbstractDelaneySet)
-    nrLoops(i) = count(D -> get(ds, i, D) == D, 1 : size(ds))
-    nrOrbits(i, j) = length(orbits(ds, i, j))
-
-    nf = size(ds)
-    ne = div(3 * nf + nrLoops(0) + nrLoops(1) + nrLoops(2), 2)
-    nv = nrOrbits(0, 1) + nrOrbits(0, 2) + nrOrbits(1, 2)
-
-    return nf - ne + nv
 end
