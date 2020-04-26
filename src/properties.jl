@@ -107,6 +107,9 @@ function countOrbits(ds::AbstractDelaneySymbol, i::Int64, j::Int64)
 end
 
 
+# The remaining functions in this file are specialized helpers for
+# isPseudoConvex() which assume that the D-symbol they work on is oriented.
+
 function findDiskBoundingTwoCut(
     ds::AbstractDelaneySymbol, hasHandles::Bool, A::Int64
 )
@@ -268,79 +271,51 @@ end
 function checkPatch(
     ds::AbstractDelaneySymbol, cut::Vector{Int64}, allow2Cone::Bool
 )
-    seed = cut[1]
-
-    inCut = fill(false, size(ds))
-    outside = fill(false, size(ds))
-    for D in cut
-        D1 = get(ds, 1, D)
-        inCut[D] = inCut[D1] = true
-        if !(D1 in cut)
-            outside[D1] = true
-        end
-    end
-
-    inPatch = fill(false, size(ds))
-    inPatch[seed] = true
-    elements = [seed]
-    next = 1
-    nrLoops = 0
-
-    while next <= length(elements)
-        D = elements[next]
-        next += 1
-
-        for i in 0 : dim(ds)
-            Di = (i == 1 && inCut[D]) ? D : get(ds, i, D)
-            if Di == D
-                nrLoops += 1
-            elseif outside[Di]
-                return false
-            elseif !inPatch[Di]
-                inPatch[Di] = true
-                push!(elements, Di)
-            end
-        end
+    elements = patchElements(ds, cut)
+    if elements == nothing
+        return false
     end
 
     seen2Cone = false
-    eulerChar = -div(length(elements) + nrLoops, 2)
+    eulerChar = div(length(cut) - length(elements), 2)
 
     for i in 0 : dim(ds) - 1
         for j in i + 1 : dim(ds)
             seen = fill(false, size(ds))
+
+            if i == 1 || j == 1
+                for D in cut
+                    if !seen[D]
+                        E = D
+                        k = i + j - 1
+                        seen[E] = true
+
+                        while !(k == 1 && E in cut)
+                            E = get(ds, k, E)
+                            k = i + j - k
+                            seen[E] = true
+                        end
+                    end
+                end
+            end
+
             for D in elements
                 if !seen[D]
                     eulerChar += 1
-                    isChain = false
-
                     E = D
-                    k = i
-
-                    while true
-                        Ek = (k == 1 && inCut[E]) ? E : get(ds, k, E)
-                        seen[Ek] = true
-                        if Ek == E
-                            isChain = true
-                        end
-
-                        E = Ek
-                        k = i + j - k
-                        if E == D && k == i
-                            break
-                        end
+                    while !seen[E]
+                        seen[E] = seen[get(ds, i, E)] = true
+                        E = get(ds, j, get(ds, i, E))
                     end
 
-                    if !isChain
-                        vD = v(ds, i, j, D)
-                        if vD > 2
+                    vD = v(ds, i, j, D)
+                    if vD > 2
+                        return false
+                    elseif vD == 2
+                        if !allow2Cone || seen2Cone
                             return false
-                        elseif vD == 2
-                            if !allow2Cone || seen2Cone
-                                return false
-                            else
-                                seen2Cone = true
-                            end
+                        else
+                            seen2Cone = true
                         end
                     end
                 end
@@ -349,4 +324,35 @@ function checkPatch(
     end
 
     return eulerChar == 1
+end
+
+
+function patchElements(ds::AbstractDelaneySymbol, cut::Vector{Int64})
+    inPatch = fill(false, size(ds))
+    elements = fill(0, size(ds))
+
+    seed = cut[1]
+    inPatch[seed] = true
+    elements[1] = seed
+    next = nrElements = 1
+
+    while next <= nrElements
+        D = elements[next]
+        next += 1
+
+        for i in 0 : dim(ds)
+            Di = get(ds, i, D)
+            if (i == 1 && D in cut)
+                continue
+            elseif (i == 1 && Di in cut)
+                return nothing
+            elseif !inPatch[Di]
+                inPatch[Di] = true
+                nrElements += 1
+                elements[nrElements] = Di
+            end
+        end
+    end
+
+    return elements[1 : nrElements]
 end
