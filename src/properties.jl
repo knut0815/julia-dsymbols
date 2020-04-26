@@ -113,28 +113,16 @@ end
 function findDiskBoundingTwoCut(
     ds::AbstractDelaneySymbol, hasHandles::Bool, A::Int64
 )
-    seen = fill(false, size(ds))
-    seen[A] = seen[get(ds, 2, A)] = true
+    B = get(ds, 1, get(ds, 0, A))
 
-    B = get(ds, 1, A)
-    while true
-        B = get(ds, 0, get(ds, 1, B))
-        if seen[B]
-            break
-        elseif B == get(ds, 0, A)
-            seen[B] = seen[get(ds, 1, B)] = true
-            continue
-        end
+    while B != A
+        B = get(ds, 1, get(ds, 0, B))
 
-        seen[B] = seen[get(ds, 1, B)] = true
-
-        T = get(ds, 1, B)
-        while true
+        T = get(ds, 2, get(ds, 1, B))
+        while T != B
             T = get(ds, 2, get(ds, 1, T))
             if T == A
-                return boundsDisk(ds, hasHandles, A, B)
-            elseif seen[T]
-                break
+                return boundsDisk(ds, hasHandles, A, get(ds, 1, B))
             end
         end
     end
