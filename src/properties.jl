@@ -202,19 +202,13 @@ function boundsDisk(
         B1 = get(ds, 1, B)
 
         if A1 == B
-            v01 = v(ds, 0, 1, A)
-            v12 = v(ds, 1, 2, A)
-
-            if (v01 == 1 && v12 <= 2) || (v01 <= 2 && v12 == 1)
+            if v(ds, 0, 1, A) == 1 || v(ds, 1, 2, A) == 1
                 return false
             end
-        end
-
-        if (
-            get(ds, 0, A1) == B1 && get(ds, 2, A1) == B1 &&
-            v(ds, 0, 1, A) == 1 && v(ds, 1, 2, A) == 1
-        )
-            return false
+        elseif get(ds, 0, A1) == B1 && get(ds, 2, A1) == B1
+            if v(ds, 0, 1, A) == 1 && v(ds, 1, 2, A) == 1
+                return false
+            end
         end
     end
 
